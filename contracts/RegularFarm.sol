@@ -51,23 +51,22 @@ contract RegularFarm is Ownable{
         }
         // Transfer back staked to account
         beanContract.transfer(msg.sender, stakedBalance[msg.sender].stakedAmount);
-        // Deduct from staking balance
-        stakedBalance[msg.sender].stakedAmount = 0;
+        // Reset staking balance to default value
+        delete stakedBalance[msg.sender];
     }
 
     function getAmountStake() view external returns(uint) {
         return stakedBalance[msg.sender].stakedAmount;
     }
 
-    function claim() external{
+    function claim() external {
         // calculate reward without unstaking.
         uint reward = calculateReward(msg.sender);
-        if (reward != 0) {
-            // mint reward to msg.sender
-            beanContract.mint(msg.sender, reward);
-            // Update last claimed to recent
-            stakedBalance[msg.sender].lastClaimed = block.timestamp;
-        }
+        require(reward > 0, "No rewards to claim yet.");
+        // mint reward to msg.sender
+        beanContract.mint(msg.sender, reward);
+        // Update last claimed to recent
+        stakedBalance[msg.sender].lastClaimed = block.timestamp;
     }
 
     // Fixed rate 1 bean per minute (no matter how many bean you stake)

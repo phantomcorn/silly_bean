@@ -88,7 +88,7 @@ describe("RegularFarm", function () {
         const {bean, farm, p1, p2, p3} = await deploySystem();
         
         await stake(farm,bean,p1);
-        expect(farm.connect(p1).claim()).to.be.revertedWithoutReason;
+        expect(farm.connect(p1).claim()).to.be.revertedWith("No rewards to claim yet.");
     })
     
     it("Claim alone does not remove staked principal", async function() {
@@ -118,7 +118,7 @@ describe("RegularFarm", function () {
         expect(await bean.balanceOf(p1.address)).equals(REWARDS_SHOULD_EARN);
         expect(await bean.totalSupply()).equals(3 + REWARDS_SHOULD_EARN);
 
-        farm.connect(p1).claim(); //should do nothing
+        expect(farm.connect(p1).claim()).to.be.revertedWith("No rewards to claim yet.");
 
         expect(await bean.balanceOf(p1.address)).equals(REWARDS_SHOULD_EARN);
         expect(await bean.totalSupply()).equals(3 + REWARDS_SHOULD_EARN);
