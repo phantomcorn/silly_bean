@@ -25,13 +25,13 @@ contract RegularFarm is Ownable{
 
     /*
         Usually when UI press stake 2 things are called
-            1. approve(this.address, amount) 
-            2. stake(amount) <- This function
+            1. approve(this.address) 
+            2. stake() <- This function
     */
     function stake() external{
         require(beanContract.balanceOf(msg.sender) > 0);
-        //approve(this.address, amount) already called
         uint totalBalance = beanContract.balanceOf(msg.sender);
+        //approve(this.address, totalBalance) already called
         beanContract.transferFrom(msg.sender, address(this), totalBalance);
         //add to stakedBalance
         StakedBalance storage staker = stakedBalance[msg.sender];
@@ -46,7 +46,9 @@ contract RegularFarm is Ownable{
         require(stakedBalance[msg.sender].stakedAmount > 0);
         // Claim reward
         uint reward = calculateReward(msg.sender);
-        beanContract.mint(msg.sender, reward);
+        if (reward != 0) {
+            beanContract.mint(msg.sender, reward);
+        }
         // Transfer back staked to account
         beanContract.transfer(msg.sender, stakedBalance[msg.sender].stakedAmount);
         // Deduct from staking balance
@@ -60,13 +62,12 @@ contract RegularFarm is Ownable{
     function claim() external{
         // calculate reward without unstaking.
         uint reward = calculateReward(msg.sender);
-        if (reward == 0) {
-            return;
+        if (reward != 0) {
+            // mint reward to msg.sender
+            beanContract.mint(msg.sender, reward);
+            // Update last claimed to recent
+            stakedBalance[msg.sender].lastClaimed = block.timestamp;
         }
-        // mint reward to msg.sender
-        beanContract.mint(msg.sender, reward);
-        // Update last claimed to recent
-        stakedBalance[msg.sender].lastClaimed = block.timestamp;
     }
 
     // Fixed rate 1 bean per minute (no matter how many bean you stake)
