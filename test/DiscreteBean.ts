@@ -5,6 +5,10 @@ const { ethers } = await network.create();
 
 describe("DiscreteBean", function () {
 
+  it("Can init without args", async function() {
+    expect(await ethers.deployContract("DiscreteBean"))
+  })
+
   it("Should get BEAN from symbol()", async function () {
     const contract = await ethers.deployContract("DiscreteBean");
     expect(await contract.symbol()).equals("BEAN");
@@ -142,6 +146,41 @@ describe("DiscreteBean", function () {
     await contract.transferOwnership(nextOwner.address)
 
     expect(await contract.owner()).equals(nextOwner.address);
+  })
+
+
+  it("Owner can mint BEAN", async function() {
+    const [owner, nextOwner, _] = await ethers.getSigners();
+    const contract = await ethers.deployContract("DiscreteBean");
+    expect(await contract.owner()).equals(owner.address);
+    expect(await contract.totalSupply()).equals(3);
+
+    await contract.mint(owner.address, 7);
+
+    expect(await contract.totalSupply()).equals(10);
+  })
+
+  it("Non-owner cannot mint BEAN", async function() {
+    const [owner, notOwner, _] = await ethers.getSigners();
+    const contract = await ethers.deployContract("DiscreteBean");
+    expect(await contract.owner()).equals(owner.address);
+    expect(await contract.totalSupply()).equals(3);
+
+    await expect(contract.connect(notOwner).mint(notOwner.address, 3)).to.be.revertedWithCustomError(contract, "OwnableUnauthorizedAccount")
+  })
+
+  it("Transferred owner can mint BEAN", async function() {
+    const [owner, nextOwner, _] = await ethers.getSigners();
+    const contract = await ethers.deployContract("DiscreteBean");
+    expect(await contract.owner()).equals(owner.address);
+    expect(await contract.totalSupply()).equals(3);
+
+    await contract.transferOwnership(nextOwner.address)
+    await contract.connect(nextOwner).mint(nextOwner.address, 8);
+
+    expect(await contract.totalSupply()).equals(11);
+    expect(await contract.balanceOf(owner.address)).equals(3)
+    expect(await contract.balanceOf(nextOwner.address)).equals(8);
   })
 
 });
