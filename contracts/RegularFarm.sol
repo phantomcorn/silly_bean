@@ -5,7 +5,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 interface BeanInterface {
     function mint(address to, uint amount) external;
-    function balanceOf(address account) external;
+    function balanceOf(address account) external returns(uint);
     function transfer(address to, uint amount) external;
     function transferFrom(address from, address to, uint value) external;
 }
@@ -14,8 +14,8 @@ contract RegularFarm is Ownable{
 
     BeanInterface beanContract;
     struct StakedBalance {
-        uint stakedAmount
-        uint lastClaimed
+        uint stakedAmount;
+        uint lastClaimed;
     }
     mapping(address => StakedBalance) stakedBalance;
 
@@ -31,10 +31,11 @@ contract RegularFarm is Ownable{
     function stake() external{
         require(beanContract.balanceOf(msg.sender) > 0);
         //approve(this.address, amount) already called
-        beanContract.transferFrom(msg.sender, this.address, beanContract.balanceOf(msg.sender));
+        uint totalBalance = beanContract.balanceOf(msg.sender);
+        beanContract.transferFrom(msg.sender, address(this), totalBalance);
         //add to stakedBalance
         StakedBalance storage staker = stakedBalance[msg.sender];
-        staker.stakedAmount += amount;
+        staker.stakedAmount = totalBalance;
         if (staker.lastClaimed == 0) {
             staker.lastClaimed = block.timestamp;
         } 
@@ -47,13 +48,13 @@ contract RegularFarm is Ownable{
         uint reward = calculateReward(msg.sender);
         beanContract.mint(msg.sender, reward);
         // Transfer back staked to account
-        beanContract.transfer(msg.sender, stakedBalance.stakedAmount);
+        beanContract.transfer(msg.sender, stakedBalance[msg.sender].stakedAmount);
         // Deduct from staking balance
-        stakedBalance[msg.sender].stakedAmount -= amount;
+        stakedBalance[msg.sender].stakedAmount = 0;
     }
 
     function getAmountStake() view external returns(uint) {
-        return stakedBalance[msg.sender];
+        return stakedBalance[msg.sender].stakedAmount;
     }
 
     function claim() external{
@@ -62,7 +63,7 @@ contract RegularFarm is Ownable{
         // mint reward to msg.sender
         beanContract.mint(msg.sender, reward);
         // Update last claimed to recent
-        stakedBalance[claimer].lastClaimed = block.timstamp;
+        stakedBalance[msg.sender].lastClaimed = block.timestamp;
     }
 
     function setBeanContract(address beanAddress) external onlyOwner { 
@@ -70,9 +71,9 @@ contract RegularFarm is Ownable{
     }
 
     // Fixed rate 1 bean per minute (no matter how many bean you stake)
-    function calculateReward(address staker) internal {
-        uint timeElapsed = block.timestamp - stakedBalances[staker].lastClaimed;
-        return timeElapsed / 60
+    function calculateReward(address staker) internal returns(uint) {
+        uint timeElapsed = block.timestamp - stakedBalance[staker].lastClaimed;
+        return timeElapsed / 60;
     }
 
 }
