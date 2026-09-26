@@ -70,7 +70,7 @@ contract RegularFarm is Ownable{
     }
 
     // Fixed rate 1 bean per minute (no matter how many bean you stake)
-    function calculateReward(address staker) internal returns(uint) {
+    function calculateReward(address staker) internal view returns(uint) {
         uint timeElapsed = block.timestamp - stakedBalance[staker].lastClaimed;
         return timeElapsed / 60;
     }
