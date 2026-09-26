@@ -6,20 +6,20 @@ Token (Discrete Bean): https://sepolia.etherscan.io/address/0xc3db73C54ECf44a67e
 
 Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0xECb4ac66CEA2e69DB864D2951fE515C800e9C260
 
-# Discrete Bean (BEAN) 
+# Discrete Bean (Token)
 
 - Discrete Bean (BEAN) is an ERC-20 token.
-- Initial supply is 3 bean.
+- Initial supply is 3 BEAN.
 - BEANs can be placed in Regular Farm (staking pool) which will mint more beans.
 
 # Regular Farm (Staking pool) 
 
 - Anyone can stake their beans.
-- 1 bean rewarded for every minute the user has staked.
-- Beans can be staked/unstaked at any time (no locked up period).
+- 1 BEAN rewarded for every minute the user has staked.
+- BEANs can be staked/unstaked at any time (no locked up period).
 - Either entire balance of BEAN can be staked or none.
 - If staking time is not whole minute. The floor is taken.
-- Rewarded beans can be claimed without unstaking.
+- Rewarded BEAN can be claimed without unstaking.
 - Only the farm can generate (mint) more beans. No one else can do that.
 
 # What I did
