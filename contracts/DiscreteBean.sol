@@ -6,8 +6,9 @@ import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract DiscreteBean is ERC20, ERC20Burnable, Ownable {
-    constructor(uint initialSupply) ERC20("Bean", "BEAN") Ownable(msg.sender) {
-        _mint(msg.sender, initialSupply);
+
+    constructor() ERC20("Bean", "BEAN") Ownable(msg.sender) {
+        _mint(msg.sender, 3);
     }
 
     function decimals() public pure override returns(uint8) {
