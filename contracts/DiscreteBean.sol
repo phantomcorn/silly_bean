@@ -14,4 +14,8 @@ contract DiscreteBean is ERC20, ERC20Burnable, Ownable {
     function decimals() public pure override returns(uint8) {
         return 0; //Beans should not have any decimals. Base unit always one.
     }
+
+    function mint(address to, uint amount) external onlyOwner {
+        _mint(to, amount);
+    }
 }
