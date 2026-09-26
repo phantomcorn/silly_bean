@@ -1,12 +1,18 @@
-# Discrete Bean (BEAN) 
-Explorer: https://sepolia.etherscan.io/address/0xc3db73C54ECf44a67eb3f12007fD6b5770e1D299
+# Overview
 
-- Discrete Bean (BEAN) is an ERC20-token made for learning.
+ERC-20 smart contract with ability to stake built for learning purpose.
+
+Token (Discrete Bean): https://sepolia.etherscan.io/address/0xc3db73C54ECf44a67eb3f12007fD6b5770e1D299
+
+Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0xECb4ac66CEA2e69DB864D2951fE515C800e9C260
+
+# Discrete Bean (BEAN) 
+
+- Discrete Bean (BEAN) is an ERC-20 token.
 - Initial supply is 1 bean.
-- BEANs can be placed in **Regular Farm** (staking) which will produce more beans.
+- BEANs can be placed in Regular Farm (staking pool) which will produce more beans.
 
 # Regular Farm (Staking pool) 
-Explorer: https://sepolia.etherscan.io/address/0xECb4ac66CEA2e69DB864D2951fE515C800e9C260
 
 - Anyone can stake their beans.
 - 1 bean rewarded for every minute the user has staked.
@@ -19,9 +25,9 @@ Explorer: https://sepolia.etherscan.io/address/0xECb4ac66CEA2e69DB864D2951fE515C
 # What I did
 
 - Wrote an ERC20-standard smart contract 
-- Wrote test case
+- Wrote test cases for robustness
 - Connect contract to an RPC endpoint
-- Deployed contract on
+- Deployed contract on Ethereum Sepolia testnet
 
 # What I learnt
 
