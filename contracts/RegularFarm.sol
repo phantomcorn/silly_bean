@@ -60,6 +60,9 @@ contract RegularFarm is Ownable{
     function claim() external{
         // calculate reward without unstaking.
         uint reward = calculateReward(msg.sender);
+        if (reward == 0) {
+            return;
+        }
         // mint reward to msg.sender
         beanContract.mint(msg.sender, reward);
         // Update last claimed to recent
