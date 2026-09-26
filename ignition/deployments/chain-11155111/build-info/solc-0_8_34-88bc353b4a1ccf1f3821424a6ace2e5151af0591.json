@@ -1,0 +1,57 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_34-88bc353b4a1ccf1f3821424a6ace2e5151af0591",
+  "solcVersion": "0.8.34",
+  "solcLongVersion": "0.8.34+commit.80d5c536",
+  "compilerType": "solc",
+  "toolVersions": {
+    "hardhat": "3.18.0"
+  },
+  "userSourceNameMap": {
+    "contracts/RegularFarm.sol": "project/contracts/RegularFarm.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "osaka",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode.linkReferences",
+            "evm.bytecode.object",
+            "evm.bytecode.opcodes",
+            "evm.bytecode.sourceMap",
+            "evm.deployedBytecode.immutableReferences",
+            "evm.deployedBytecode.linkReferences",
+            "evm.deployedBytecode.object",
+            "evm.deployedBytecode.opcodes",
+            "evm.deployedBytecode.sourceMap",
+            "evm.methodIdentifiers"
+          ]
+        }
+      },
+      "remappings": [
+        "project/:@openzeppelin/contracts/=npm/@openzeppelin/contracts@5.6.1/"
+      ]
+    },
+    "sources": {
+      "npm/@openzeppelin/contracts@5.6.1/access/Ownable.sol": {
+        "content": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.0.0) (access/Ownable.sol)\n\npragma solidity ^0.8.20;\n\nimport {Context} from \"../utils/Context.sol\";\n\n/**\n * @dev Contract module which provides a basic access control mechanism, where\n * there is an account (an owner) that can be granted exclusive access to\n * specific functions.\n *\n * The initial owner is set to the address provided by the deployer. This can\n * later be changed with {transferOwnership}.\n *\n * This module is used through inheritance. It will make available the modifier\n * `onlyOwner`, which can be applied to your functions to restrict their use to\n * the owner.\n */\nabstract contract Ownable is Context {\n    address private _owner;\n\n    /**\n     * @dev The caller account is not authorized to perform an operation.\n     */\n    error OwnableUnauthorizedAccount(address account);\n\n    /**\n     * @dev The owner is not a valid owner account. (eg. `address(0)`)\n     */\n    error OwnableInvalidOwner(address owner);\n\n    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);\n\n    /**\n     * @dev Initializes the contract setting the address provided by the deployer as the initial owner.\n     */\n    constructor(address initialOwner) {\n        if (initialOwner == address(0)) {\n            revert OwnableInvalidOwner(address(0));\n        }\n        _transferOwnership(initialOwner);\n    }\n\n    /**\n     * @dev Throws if called by any account other than the owner.\n     */\n    modifier onlyOwner() {\n        _checkOwner();\n        _;\n    }\n\n    /**\n     * @dev Returns the address of the current owner.\n     */\n    function owner() public view virtual returns (address) {\n        return _owner;\n    }\n\n    /**\n     * @dev Throws if the sender is not the owner.\n     */\n    function _checkOwner() internal view virtual {\n        if (owner() != _msgSender()) {\n            revert OwnableUnauthorizedAccount(_msgSender());\n        }\n    }\n\n    /**\n     * @dev Leaves the contract without owner. It will not be possible to call\n     * `onlyOwner` functions. Can only be called by the current owner.\n     *\n     * NOTE: Renouncing ownership will leave the contract without an owner,\n     * thereby disabling any functionality that is only available to the owner.\n     */\n    function renounceOwnership() public virtual onlyOwner {\n        _transferOwnership(address(0));\n    }\n\n    /**\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\n     * Can only be called by the current owner.\n     */\n    function transferOwnership(address newOwner) public virtual onlyOwner {\n        if (newOwner == address(0)) {\n            revert OwnableInvalidOwner(address(0));\n        }\n        _transferOwnership(newOwner);\n    }\n\n    /**\n     * @dev Transfers ownership of the contract to a new account (`newOwner`).\n     * Internal function without access restriction.\n     */\n    function _transferOwnership(address newOwner) internal virtual {\n        address oldOwner = _owner;\n        _owner = newOwner;\n        emit OwnershipTransferred(oldOwner, newOwner);\n    }\n}\n"
+      },
+      "npm/@openzeppelin/contracts@5.6.1/utils/Context.sol": {
+        "content": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)\n\npragma solidity ^0.8.20;\n\n/**\n * @dev Provides information about the current execution context, including the\n * sender of the transaction and its data. While these are generally available\n * via msg.sender and msg.data, they should not be accessed in such a direct\n * manner, since when dealing with meta-transactions the account sending and\n * paying for execution may not be the actual sender (as far as an application\n * is concerned).\n *\n * This contract is only required for intermediate, library-like contracts.\n */\nabstract contract Context {\n    function _msgSender() internal view virtual returns (address) {\n        return msg.sender;\n    }\n\n    function _msgData() internal view virtual returns (bytes calldata) {\n        return msg.data;\n    }\n\n    function _contextSuffixLength() internal view virtual returns (uint256) {\n        return 0;\n    }\n}\n"
+      },
+      "project/contracts/RegularFarm.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport {Ownable} from \"@openzeppelin/contracts/access/Ownable.sol\";\n\ninterface BeanInterface {\n    function mint(address to, uint amount) external;\n    function balanceOf(address account) external returns(uint);\n    function transfer(address to, uint amount) external;\n    function transferFrom(address from, address to, uint value) external;\n}\n\ncontract RegularFarm is Ownable{\n\n    BeanInterface beanContract;\n    struct StakedBalance {\n        uint stakedAmount;\n        uint lastClaimed;\n    }\n    mapping(address => StakedBalance) stakedBalance;\n\n    constructor(address beanContractAddress) Ownable(msg.sender) {\n        beanContract = BeanInterface(beanContractAddress);\n    }\n\n    /*\n        Usually when UI press stake 2 things are called\n            1. approve(this.address, amount) \n            2. stake(amount) <- This function\n    */\n    function stake() external{\n        require(beanContract.balanceOf(msg.sender) > 0);\n        //approve(this.address, amount) already called\n        uint totalBalance = beanContract.balanceOf(msg.sender);\n        beanContract.transferFrom(msg.sender, address(this), totalBalance);\n        //add to stakedBalance\n        StakedBalance storage staker = stakedBalance[msg.sender];\n        staker.stakedAmount = totalBalance;\n        if (staker.lastClaimed == 0) {\n            staker.lastClaimed = block.timestamp;\n        } \n    }\n\n    function unstake() external {\n        // Must have more beans than unstaked amount\n        require(stakedBalance[msg.sender].stakedAmount > 0);\n        // Claim reward\n        uint reward = calculateReward(msg.sender);\n        beanContract.mint(msg.sender, reward);\n        // Transfer back staked to account\n        beanContract.transfer(msg.sender, stakedBalance[msg.sender].stakedAmount);\n        // Deduct from staking balance\n        stakedBalance[msg.sender].stakedAmount = 0;\n    }\n\n    function getAmountStake() view external returns(uint) {\n        return stakedBalance[msg.sender].stakedAmount;\n    }\n\n    function claim() external{\n        // calculate reward without unstaking.\n        uint reward = calculateReward(msg.sender);\n        if (reward == 0) {\n            return;\n        }\n        // mint reward to msg.sender\n        beanContract.mint(msg.sender, reward);\n        // Update last claimed to recent\n        stakedBalance[msg.sender].lastClaimed = block.timestamp;\n    }\n\n    // Fixed rate 1 bean per minute (no matter how many bean you stake)\n    function calculateReward(address staker) internal view returns(uint) {\n        uint timeElapsed = block.timestamp - stakedBalance[staker].lastClaimed;\n        return timeElapsed / 60;\n    }\n\n}"
+      }
+    }
+  }
+}
