@@ -1,57 +1,34 @@
-# Sample Hardhat 3 Project (`mocha` and `ethers`)
+# Discrete Bean (BEAN) 
+Explorer: https://sepolia.etherscan.io/address/0xc3db73C54ECf44a67eb3f12007fD6b5770e1D299
 
-This project showcases a Hardhat 3 project using `mocha` for tests and the `ethers` library for Ethereum interactions.
+- Discrete Bean (BEAN) is an ERC20-token made for learning.
+- Initial supply is 1 bean.
+- BEANs can be placed in **Regular Farm** (staking) which will produce more beans.
 
-To learn more about Hardhat 3, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3](https://hardhat.org/hardhat3-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
+# Regular Farm (Staking pool) 
+Explorer: https://sepolia.etherscan.io/address/0xECb4ac66CEA2e69DB864D2951fE515C800e9C260
 
-## Project Overview
+- Anyone can stake their beans.
+- 1 bean rewarded for every minute the user has staked.
+- Beans can be staked/unstaked at any time (no locked up period).
+- Either entire balance of BEAN can be staked or none.
+- If staking time is not whole minute. The floor is taken.
+- Rewarded beans can be claimed without unstaking.
+- Only the farm can generate (mint) more beans. No one else can do that.
 
-This example project includes:
+# What I did
 
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using `mocha` and ethers.js
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
+- Wrote an ERC20-standard smart contract 
+- Wrote test case
+- Connect contract to an RPC endpoint
+- Deployed contract on
 
-## Usage
+# What I learnt
 
-### Running Tests
+- Writing tests in solidity is extremely important. Once a contract has been deployed, it remains on the blockchain forever so if a vulnerability/bug has been found, assets may have to be migrated to a new smart contract.
 
-To run all the tests in the project, execute the following command:
+- Ignition modules allow you to keep track of what has been executed on the contract. Only new changes are detected and executed.
 
-```shell
-npx hardhat test
-```
+- Treat "already executed" steps as effectively permanent once deployed.
 
-You can also selectively run the Solidity or `mocha` tests:
-
-```shell
-npx hardhat test solidity
-npx hardhat test mocha
-```
-
-### Make a deployment to Sepolia
-
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
-
-To run the deployment to a local chain:
-
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
-```
-
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
-
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
-
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
-
-```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
-```
-
-After setting the variable, you can run the deployment with the Sepolia network:
-
-```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
-```
+- Ignition deployed must be version controlled (i.e pushed onto git) https://hardhat.org/ignition/docs/guides/versioning.
