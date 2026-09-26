@@ -19,8 +19,8 @@ contract RegularFarm is Ownable{
     }
     mapping(address => StakedBalance) stakedBalance;
 
-    constructor() Ownable(msg.sender) {
-
+    constructor(address beanContractAddress) Ownable(msg.sender) {
+        beanContract = BeanInterface(beanContractAddress);
     }
 
     /*
@@ -64,10 +64,6 @@ contract RegularFarm is Ownable{
         beanContract.mint(msg.sender, reward);
         // Update last claimed to recent
         stakedBalance[msg.sender].lastClaimed = block.timestamp;
-    }
-
-    function setBeanContract(address beanAddress) external onlyOwner { 
-        beanContract = BeanInterface(beanAddress);
     }
 
     // Fixed rate 1 bean per minute (no matter how many bean you stake)
