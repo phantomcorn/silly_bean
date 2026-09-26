@@ -9,8 +9,8 @@ Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0xECb4ac66CEA2
 # Discrete Bean (BEAN) 
 
 - Discrete Bean (BEAN) is an ERC-20 token.
-- Initial supply is 1 bean.
-- BEANs can be placed in Regular Farm (staking pool) which will produce more beans.
+- Initial supply is 3 bean.
+- BEANs can be placed in Regular Farm (staking pool) which will mint more beans.
 
 # Regular Farm (Staking pool) 
 
