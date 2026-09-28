@@ -10,7 +10,7 @@ interface BeanInterface {
     function transferFrom(address from, address to, uint value) external;
 }
 
-contract RegularFarm is Ownable{
+contract RegularFarm {
 
     BeanInterface beanContract;
     struct StakedBalance {
@@ -19,7 +19,7 @@ contract RegularFarm is Ownable{
     }
     mapping(address => StakedBalance) stakedBalance;
 
-    constructor(address beanContractAddress) Ownable(msg.sender) {
+    constructor(address beanContractAddress) {
         beanContract = BeanInterface(beanContractAddress);
     }
 
@@ -28,7 +28,7 @@ contract RegularFarm is Ownable{
             1. approve(this.address) 
             2. stake() <- This function
     */
-    function stake() external{
+    function stake() external {
         require(beanContract.balanceOf(msg.sender) > 0);
         uint totalBalance = beanContract.balanceOf(msg.sender);
         //approve(this.address, totalBalance) already called
