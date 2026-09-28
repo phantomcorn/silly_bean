@@ -68,7 +68,7 @@ describe("RegularFarm", function () {
         expect(await farm.connect(p1).getAmountStake()).equals(0)     
     })
 
-    it("Claim ok", async function() {
+    it("Farm can mint BEAN (claim ok)", async function() {
         const {bean, farm, p1, p2, p3} = await deploySystem();
         
         
