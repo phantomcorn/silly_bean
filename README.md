@@ -28,6 +28,7 @@ Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0xECb4ac66CEA2
 - Wrote test cases for robustness
 - Connect contract to an RPC endpoint
 - Deployed contract on Ethereum Sepolia testnet
+- Verified contract source code on Etherscan, Blockscout, and Sourcify
 
 # What I learnt
 
@@ -37,4 +38,4 @@ Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0xECb4ac66CEA2
 
 - Treat "already executed" steps as effectively permanent once deployed.
 
-- Ignition deployed must be version controlled (i.e pushed onto git) https://hardhat.org/ignition/docs/guides/versioning.
+- Ignition deployments must be version controlled. (i.e pushed onto git) https://hardhat.org/ignition/docs/guides/versioning.
