@@ -29,16 +29,18 @@ describe("DiscreteBean", function () {
     expect(await contract.totalSupply()).equals(3);
   })
 
-  it("Should get current user address as owner", async function () {
-    const [owner, p2, p3] = await ethers.getSigners()
+  it("Contract deployer is admin", async function () {
+    const [deployer, p2, p3] = await ethers.getSigners()
     const contract = await ethers.deployContract("DiscreteBean");
-    expect(await contract.owner()).equals(owner.address);
+
+    const adminRole = await contract.DEFAULT_ADMIN_ROLE();
+    expect(await contract.hasRole(adminRole, deployer.address)).equals(true);
   })
 
-  it("Initial balance of owner is 3", async function() {
-    const [owner, p2, p3] = await ethers.getSigners()
+  it("Initial balance of deployer is 3", async function() {
+    const [deployer, p2, p3] = await ethers.getSigners()
     const contract = await ethers.deployContract("DiscreteBean");
-    expect(await contract.balanceOf(owner.address)).equals(3);
+    expect(await contract.balanceOf(deployer.address)).equals(3);
   })
 
   it("Transfer ok", async function () {
@@ -135,52 +137,39 @@ describe("DiscreteBean", function () {
     expect(await contract.balanceOf(p2.address)).equals(0);
     expect(await contract.totalSupply()).equals(1);
   })
-  
-  //Test ownership transfer
-  it("Ownership transfer ok", async function () {
-    const [owner, nextOwner, _] = await ethers.getSigners();
+
+
+  it("Deployer can mint BEAN", async function() {
+    const [deployer, _] = await ethers.getSigners();
     const contract = await ethers.deployContract("DiscreteBean");
-
-    expect(await contract.owner()).equals(owner.address);
-
-    await contract.transferOwnership(nextOwner.address)
-
-    expect(await contract.owner()).equals(nextOwner.address);
-  })
-
-
-  it("Owner can mint BEAN", async function() {
-    const [owner, nextOwner, _] = await ethers.getSigners();
-    const contract = await ethers.deployContract("DiscreteBean");
-    expect(await contract.owner()).equals(owner.address);
+    const adminRole = await contract.DEFAULT_ADMIN_ROLE();
+    expect(await contract.hasRole(adminRole, deployer.address)).equals(true);
     expect(await contract.totalSupply()).equals(3);
 
-    await contract.mint(owner.address, 7);
+    await contract.mint(deployer.address, 7);
 
     expect(await contract.totalSupply()).equals(10);
   })
 
-  it("Non-owner cannot mint BEAN", async function() {
-    const [owner, notOwner, _] = await ethers.getSigners();
-    const contract = await ethers.deployContract("DiscreteBean");
-    expect(await contract.owner()).equals(owner.address);
+  it("Minter can mint BEAN", async function () {
+    const [deployer, minter] = await ethers.getSigners();
+    const contract = await ethers.deployContract("DiscreteBean")
+    
+    await contract.setMinter(minter.address);
     expect(await contract.totalSupply()).equals(3);
 
-    await expect(contract.connect(notOwner).mint(notOwner.address, 3)).to.be.revertedWithCustomError(contract, "OwnableUnauthorizedAccount")
+    await contract.connect(minter).mint(minter.address, 2);
+    
+    expect(await contract.totalSupply()).equals(5);
   })
 
-  it("Transferred owner can mint BEAN", async function() {
-    const [owner, nextOwner, _] = await ethers.getSigners();
+  it("Non-minter cannot mint BEAN", async function() {
+    const [deployer, nonMinter, _] = await ethers.getSigners();
     const contract = await ethers.deployContract("DiscreteBean");
-    expect(await contract.owner()).equals(owner.address);
+
     expect(await contract.totalSupply()).equals(3);
-
-    await contract.transferOwnership(nextOwner.address)
-    await contract.connect(nextOwner).mint(nextOwner.address, 8);
-
-    expect(await contract.totalSupply()).equals(11);
-    expect(await contract.balanceOf(owner.address)).equals(3)
-    expect(await contract.balanceOf(nextOwner.address)).equals(8);
+    await expect(contract.connect(nonMinter).mint(nonMinter.address, 3)).to.be.revertedWithCustomError(contract,"AccessControlUnauthorizedAccount");
+    expect(await contract.totalSupply()).equals(3);
   })
 
 });

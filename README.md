@@ -20,7 +20,7 @@ Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0xECb4ac66CEA2
 - Either entire balance of BEAN can be staked or none.
 - If staking time is not whole minute. The floor is taken.
 - Rewarded BEAN can be claimed without unstaking.
-- Only the farm can generate (mint) more beans. No one else can do that.
+- The farm **can** generate (mint) more beans. 
 
 # What I did
 
@@ -29,6 +29,7 @@ Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0xECb4ac66CEA2
 - Connect contract to an RPC endpoint
 - Deployed contract on Ethereum Sepolia testnet
 - Verified contract source code on Etherscan, Blockscout, and Sourcify
+- Upgraded BEAN from Ownable to Access Control-based role so both farm and bean stalk can mint more beans.
 
 # What I learnt
 
@@ -39,3 +40,6 @@ Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0xECb4ac66CEA2
 - Treat "already executed" steps as effectively permanent once deployed.
 
 - Ignition deployments must be version controlled. (i.e pushed onto git) https://hardhat.org/ignition/docs/guides/versioning.
+
+- Access Control gives a finer control on who has access to what function.
+- Access Control `DEFAULT_ADMIN_ROLE` does not grant power to all function (not equal to owner).
