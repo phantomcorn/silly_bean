@@ -15,7 +15,7 @@ async function deploySystem() {
     const bean = await ethers.deployContract("DiscreteBean");
     const farm = await ethers.deployContract("RegularFarm", [await bean.getAddress()]);
 
-    await bean.transferOwnership(await farm.getAddress());
+    await bean.setMinter(await farm.getAddress()); //Farm can mint
     return {bean, farm, p1, p2, p3}
 }
 
