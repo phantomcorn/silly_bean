@@ -2,9 +2,11 @@
 
 ERC-20 smart contract with ability to stake built for learning purpose.
 
-Token (Discrete Bean): https://sepolia.etherscan.io/address/0xc3db73C54ECf44a67eb3f12007fD6b5770e1D299
+Token (Discrete Bean): https://sepolia.etherscan.io/address/0xb878d053c85cBAaf70B6104B9D77db919777B8aA
 
-Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0xECb4ac66CEA2e69DB864D2951fE515C800e9C260
+Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0x76F6f261Ab8F6CA05C10482F7229BaeFdAD30025
+
+Prediction market (BeanStalk): https://sepolia.etherscan.io/address/0xeC35e7A7fFC40eC7a6E0bdDD818fC288865f4975
 
 # Discrete Bean (Token)
 
@@ -22,14 +24,28 @@ Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0xECb4ac66CEA2
 - Rewarded BEAN can be claimed without unstaking.
 - The farm **can** generate (mint) more beans. 
 
+# Bean Stalk (Prediction Market)
+
+- Any BEAN holders can stake.
+- Given recent ETH/USD, predicts whether the current price is higher/lower than the current one.
+- Price will update every 10 seconds or once the user predicts.
+- Uses an oracle network to look up the price of ETH/USD.
+- If guess is correct, a multiplier is used to reward more BEANs.
+- If guess is wrong, holders lose their BEAN to the house.
+- Bean Stalk **can** generate (mint) more beans. 
+
 # What I did
 
 - Wrote an ERC20-standard smart contract 
+- Wrote basic staking pool contract with fixed reward rate
+- Wrote basic prediction market contract to predict high/lower from current price pulled from a data feed.
 - Wrote test cases for robustness
 - Connect contract to an RPC endpoint
 - Deployed contract on Ethereum Sepolia testnet
 - Verified contract source code on Etherscan, Blockscout, and Sourcify
 - Upgraded BEAN from Ownable to Access Control-based role so both farm and bean stalk can mint more beans.
+- Test oracle network integration by mocking data feed
+- Simulate time by mocking
 
 # What I learnt
 
