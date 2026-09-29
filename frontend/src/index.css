@@ -1,0 +1,21 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+section {
+  margin-bottom: 24px;
+}
+
+input {
+  margin: 4px;
+}
