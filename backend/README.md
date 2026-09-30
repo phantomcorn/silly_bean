@@ -2,11 +2,11 @@
 
 ERC-20 smart contract with ability to stake built for learning purpose.
 
-Token (Discrete Bean): https://sepolia.etherscan.io/address/0xb878d053c85cBAaf70B6104B9D77db919777B8aA
+Token (Discrete Bean): https://sepolia.etherscan.io/address/0x9f2B1530F67f1f4FF8A94bDCcBc07F6aC8689cA2
 
-Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0x76F6f261Ab8F6CA05C10482F7229BaeFdAD30025
+Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0x92b7395188042CC13B7c967f7Eed9295Cf1D803D
 
-Prediction market (BeanStalk): https://sepolia.etherscan.io/address/0xeC35e7A7fFC40eC7a6E0bdDD818fC288865f4975
+Prediction market (BeanStalk): https://sepolia.etherscan.io/address/0x508A741120Bc69f1268093f7871a961103C281B0
 
 # Discrete Bean (Token)
 
