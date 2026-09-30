@@ -9,10 +9,18 @@ interface Props {
   address: string | null;
 }
 
+interface PredictionRound {
+  hasResolved: boolean;
+  stakedAmount: string;
+  currPrice: string;
+  createdAt: string;
+  isHigher: boolean;
+}
+
 export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
   const [stakedAmount, setStakedAmount] = useState<string | null>(null);
   const [earnSoFar, setEarnSoFar] = useState<string | null>(null);
-  const [currPrice, setCurrPrice] = useState<string | null>(null);
+  const [rounds, setRounds] = useState<PredictionRound[]>([]);
   const [beansOnTheHouse, setBeansOnTheHouse] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState<string | null>(null);
 
@@ -25,16 +33,24 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
 
   const loadData = useCallback(async () => {
     if (!beanStalk || !discreteBean || !address) return;
-    const [staked, earned, price, house, bal] = await Promise.all([
+    const [staked, earned, predictionRounds, house, bal] = await Promise.all([
       beanStalk.getAmountStake(),
       beanStalk.getEarnSoFar(),
-      beanStalk.getCurrPrice(),
+      beanStalk.getPredictionRounds(),
       beanStalk.getBeansOnTheHouse(),
       discreteBean.balanceOf(address),
     ]);
     setStakedAmount(staked.toString());
     setEarnSoFar(earned.toString());
-    setCurrPrice(price.toString());
+    setRounds(
+      predictionRounds.map((round: PredictionRound) => ({
+        hasResolved: round.hasResolved,
+        stakedAmount: round.stakedAmount.toString(),
+        currPrice: round.currPrice.toString(),
+        createdAt: round.createdAt.toString(),
+        isHigher: round.isHigher,
+      })),
+    );
     setBeansOnTheHouse(house.toString());
     setWalletBalance(bal.toString());
   }, [beanStalk, discreteBean, address]);
@@ -73,7 +89,7 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
   const handlePredict = () =>
     status.run(async () => {
       if (!beanStalk) throw new Error("Contract not ready.");
-      const tx = await beanStalk.predict(
+      const tx = await beanStalk.lockInPredict(
         BigInt(predictAmount || "0"),
         predictHigher,
       );
@@ -84,12 +100,12 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
       await loadData();
     });
 
-  const handleRefresh = () =>
+  const handleResolve = () =>
     status.run(async () => {
       if (!beanStalk) throw new Error("Contract not ready.");
-      const tx = await beanStalk.refresh();
+      const tx = await beanStalk.resolve();
       await tx.wait();
-      status.setMessage("Price refreshed.");
+      status.setMessage("Prediction round resolved.");
       await loadData();
     });
 
@@ -99,14 +115,13 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
       <p>Contract: {CONTRACT_ADDRESSES.beanStalk}</p>
       <p>Your staked amount: {stakedAmount ?? "-"} BEAN</p>
       <p>Your earnings so far: {earnSoFar ?? "-"} BEAN</p>
-      <p>Current recorded ETH/USD price: {currPrice ?? "-"}</p>
       <p>Beans on the house: {beansOnTheHouse ?? "-"}</p>
       <p>Your wallet balance: {walletBalance ?? "-"} BEAN</p>
       <button onClick={loadData} disabled={!beanStalk || !address}>
         Refresh view
       </button>
-      <button onClick={handleRefresh} disabled={status.busy || !beanStalk}>
-        Refresh on-chain price
+      <button onClick={handleResolve} disabled={status.busy || !beanStalk}>
+        Resolve latest round
       </button>
 
       <h3>Stake</h3>
@@ -168,6 +183,30 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
           Predict
         </button>
       </div>
+
+      <h3>Recent Prediction Rounds</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Created At</th>
+            <th>Staked</th>
+            <th>Recorded Price</th>
+            <th>Direction</th>
+            <th>Resolved</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rounds.map((round, i) => (
+            <tr key={i}>
+              <td>{new Date(Number(round.createdAt) * 1000).toLocaleString()}</td>
+              <td>{round.stakedAmount}</td>
+              <td>{round.currPrice}</td>
+              <td>{round.isHigher ? "Higher" : "Lower"}</td>
+              <td>{round.hasResolved ? "Yes" : "No"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       {status.busy && <p>Pending transaction...</p>}
       {status.message && <p>{status.message}</p>}

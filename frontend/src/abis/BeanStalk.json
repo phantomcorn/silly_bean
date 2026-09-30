@@ -43,7 +43,7 @@
   },
   {
     "inputs": [],
-    "name": "getCurrPrice",
+    "name": "getEarnSoFar",
     "outputs": [
       {
         "internalType": "uint256",
@@ -56,12 +56,39 @@
   },
   {
     "inputs": [],
-    "name": "getEarnSoFar",
+    "name": "getPredictionRounds",
     "outputs": [
       {
-        "internalType": "uint256",
+        "components": [
+          {
+            "internalType": "bool",
+            "name": "hasResolved",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "stakedAmount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "currPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "createdAt",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "isHigher",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct BeanStalk.Prediction[]",
         "name": "",
-        "type": "uint256"
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -80,14 +107,14 @@
         "type": "bool"
       }
     ],
-    "name": "predict",
+    "name": "lockInPredict",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "refresh",
+    "name": "resolve",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
