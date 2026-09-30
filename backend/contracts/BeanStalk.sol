@@ -25,6 +25,9 @@ contract BeanStalk {
         uint currPrice;
         uint createdAt;
         bool isHigher;
+
+        uint endingPrice; //assigned once resolved
+        bool correct; //assigned once resolved
     }
 
     uint beansOnTheHouse;
@@ -93,7 +96,12 @@ contract BeanStalk {
     function lockInPredict(uint amount, bool higher) external {
         require(stakedBalance[msg.sender].stakedAmount >= amount, "Insufficient funds.");
         //Single player (1 player = 1 round)
-        predictions.push(Prediction(false, amount, getOraclePrice(), block.timestamp, higher));
+        Prediction memory newPrediction;
+        newPrediction.createdAt = block.timestamp;
+        newPrediction.currPrice = getOraclePrice();
+        newPrediction.stakedAmount = amount;
+        newPrediction.isHigher = higher;
+        predictions.push(newPrediction);
     }
 
     function resolve() external {
@@ -103,7 +111,8 @@ contract BeanStalk {
         require(block.timestamp - currRound.createdAt >= 10, "Try again in 10 seconds.");
         require(!currRound.hasResolved, "Round has already ended.");
         bool expectation = currRound.isHigher;
-        bool actual = getOraclePrice() > currRound.currPrice;
+        uint actualPrice = getOraclePrice();
+        bool actual = actualPrice > currRound.currPrice;
         bool correct = (expectation && actual) || (!expectation && !actual);
         if (correct) {
             uint reward = calculateReward(currRound.stakedAmount);
@@ -114,7 +123,9 @@ contract BeanStalk {
             stakedBalance[msg.sender].stakedAmount -= currRound.stakedAmount;
             beansOnTheHouse += currRound.stakedAmount;
         }
+        currRound.endingPrice = actualPrice;
         currRound.hasResolved = true;
+        currRound.correct = correct;
     }
 
     function getOraclePrice() internal view returns(uint) {

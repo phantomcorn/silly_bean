@@ -11,6 +11,7 @@ const STAKE_AMOUNT = 2;
 const REWARD_MULTIPLIER = 2;
 const CAN_RESOLVE_AFTER = 10;
 const ORIGINAL_PRICE = 5000;
+const ROUND_SIZE_LIMIT = 5;
 
 async function deploySystem() {
     const [p1, p2, p3] = await ethers.getSigners();
@@ -83,15 +84,37 @@ describe("BeanStalk", function () {
     })
 
     it("Cannot resolve without any prediction", async function() {
+        const {bean, beanstalk, p1} = await deploySystem();
+        
+        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
 
+        expect((await beanstalk.getPredictionRounds()).length).equals(0);
+        expect(beanstalk.resolve()).to.be.revertedWith("Cannot resolve without any prediction.");
     })
 
     it("Can make prediction and view", async function() {
+        const {bean, beanstalk, p1} = await deploySystem();
+        
+        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
 
+        expect((await beanstalk.getPredictionRounds()).length).equals(0);
+        await beanstalk.lockInPredict(STAKE_AMOUNT, true);
+
+        const predictions = await beanstalk.getPredictionRounds();
+        expect(predictions.length).equals(1);
+        expect(predictions[0].hasResolved).equals(false);
+        expect(predictions[0].stakedAmount).equals(2);
+        expect(predictions[0].currPrice).equals(ORIGINAL_PRICE);
+        expect(predictions[0].correct).equals(false);
     })
 
     it("Can view up to 5 latest round", async function () {
-
+        const {beanstalk} = await deploySystem();
+        for (let i = 0; i < ROUND_SIZE_LIMIT + 1; i++) {
+            await beanstalk.lockInPredict(STAKE_AMOUNT, true);
+        }
+        const predictions = await beanstalk.getPredictionRounds();
+        expect(predictions.length).equals(ROUND_SIZE_LIMIT);
     })
 
     it("Can lock in prediction with enough funds", async function() {
@@ -150,6 +173,58 @@ describe("BeanStalk", function () {
 
         expect((await beanstalk.getPredictionRounds())[0].hasResolved).equals(true);
         expect(beanstalk.resolve()).to.revertedWith("Round has already ended.");
+    })
+
+    it("Unresolved round ending price is zero", async function() {
+        const {bean, beanstalk, mockFeed, p1} = await deploySystem();
+        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
+        //lock in prediction of 2 BEAN and predicts higher
+        await beanstalk.lockInPredict(STAKE_AMOUNT, true); 
+        await mockFeed.updateAnswer(ORIGINAL_PRICE + 3000); //simulate price increase (user does not see this)
+
+        expect((await beanstalk.getPredictionRounds())[0].hasResolved).equals(false);
+        expect((await beanstalk.getPredictionRounds())[0].endingPrice).equals(0);
+    })
+
+    it("Unresolved round has correct flag as false", async function() { 
+        const {bean, beanstalk, mockFeed, p1} = await deploySystem();
+        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
+        //lock in prediction of 2 BEAN and predicts higher
+        await beanstalk.lockInPredict(STAKE_AMOUNT, true); 
+        await mockFeed.updateAnswer(ORIGINAL_PRICE + 3000); //simulate price increase (user does not see this)
+
+        expect((await beanstalk.getPredictionRounds())[0].hasResolved).equals(false);
+        expect((await beanstalk.getPredictionRounds())[0].correct).equals(false);
+    })
+
+    it("Won round has correct flag as true", async function() {
+        const {bean, beanstalk, mockFeed, p1} = await deploySystem();
+        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
+        //lock in prediction of 2 BEAN and predicts higher
+        await beanstalk.lockInPredict(STAKE_AMOUNT, true); 
+        await mockFeed.updateAnswer(ORIGINAL_PRICE + 3000); //simulate price increase (user does not see this)
+
+        expect((await beanstalk.getPredictionRounds())[0].correct).equals(false);
+
+        await networkHelpers.time.increase(CAN_RESOLVE_AFTER);
+        await beanstalk.resolve();
+
+        expect((await beanstalk.getPredictionRounds())[0].correct).equals(true);
+    })
+
+    it("Resolved round ending price is data feed price", async function() {
+        const {bean, beanstalk, mockFeed, p1} = await deploySystem();
+        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
+        //lock in prediction of 2 BEAN and predicts higher
+        await beanstalk.lockInPredict(STAKE_AMOUNT, true); 
+        await mockFeed.updateAnswer(ORIGINAL_PRICE + 3000); //simulate price increase (user does not see this)
+
+        expect((await beanstalk.getPredictionRounds())[0].endingPrice).equals(0);
+
+        await networkHelpers.time.increase(CAN_RESOLVE_AFTER);
+        await beanstalk.resolve();
+
+        expect((await beanstalk.getPredictionRounds())[0].endingPrice).equals(ORIGINAL_PRICE + 3000);
     })
 
     it("Predict high when price increase should reward bean and update price", async function() {
