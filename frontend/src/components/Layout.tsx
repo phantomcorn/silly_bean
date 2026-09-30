@@ -16,7 +16,7 @@ export function Layout() {
 
   return (
     <main>
-      <h1>Bean Stalk DApp</h1>
+      <h1>Silly Beans</h1>
 
       <nav>
         <NavLink to="/" end style={navLinkStyle}>

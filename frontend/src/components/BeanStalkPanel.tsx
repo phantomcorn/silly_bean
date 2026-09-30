@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Contract } from "ethers";
+import { formatUnits, type Contract } from "ethers";
 import { useTxStatus } from "../hooks/useTxStatus";
 import { CONTRACT_ADDRESSES } from "../config/contracts";
 
@@ -15,6 +15,8 @@ interface PredictionRound {
   currPrice: string;
   createdAt: string;
   isHigher: boolean;
+  endingPrice: string;
+  correct: boolean;
 }
 
 export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
@@ -23,6 +25,7 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
   const [rounds, setRounds] = useState<PredictionRound[]>([]);
   const [beansOnTheHouse, setBeansOnTheHouse] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState<string | null>(null);
+  const [priceDecimals, setPriceDecimals] = useState<number | null>(null);
 
   const [stakeAmount, setStakeAmount] = useState("");
   const [unstakeAmount, setUnstakeAmount] = useState("");
@@ -33,13 +36,15 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
 
   const loadData = useCallback(async () => {
     if (!beanStalk || !discreteBean || !address) return;
-    const [staked, earned, predictionRounds, house, bal] = await Promise.all([
-      beanStalk.getAmountStake(),
-      beanStalk.getEarnSoFar(),
-      beanStalk.getPredictionRounds(),
-      beanStalk.getBeansOnTheHouse(),
-      discreteBean.balanceOf(address),
-    ]);
+    const [staked, earned, predictionRounds, house, bal, decimals] =
+      await Promise.all([
+        beanStalk.getAmountStake(),
+        beanStalk.getEarnSoFar(),
+        beanStalk.getPredictionRounds(),
+        beanStalk.getBeansOnTheHouse(),
+        discreteBean.balanceOf(address),
+        beanStalk.getOracleDecimals(),
+      ]);
     setStakedAmount(staked.toString());
     setEarnSoFar(earned.toString());
     setRounds(
@@ -49,11 +54,23 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
         currPrice: round.currPrice.toString(),
         createdAt: round.createdAt.toString(),
         isHigher: round.isHigher,
+        endingPrice: round.endingPrice.toString(),
+        correct: round.correct,
       })),
     );
     setBeansOnTheHouse(house.toString());
     setWalletBalance(bal.toString());
+    setPriceDecimals(Number(decimals));
   }, [beanStalk, discreteBean, address]);
+
+  // Oracle prices are fixed-point integers scaled by the oracle's decimals.
+  const formatPrice = (raw: string) =>
+    priceDecimals === null
+      ? "-"
+      : `$${Number(formatUnits(raw, priceDecimals)).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`;
 
   useEffect(() => {
     loadData();
@@ -115,7 +132,7 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
       <p>Contract: {CONTRACT_ADDRESSES.beanStalk}</p>
       <p>Your staked amount: {stakedAmount ?? "-"} BEAN</p>
       <p>Your earnings so far: {earnSoFar ?? "-"} BEAN</p>
-      <p>Beans on the house: {beansOnTheHouse ?? "-"}</p>
+      <p>Beans on the house: {beansOnTheHouse ?? "-"} BEAN</p>
       <p>Your wallet balance: {walletBalance ?? "-"} BEAN</p>
       <button onClick={loadData} disabled={!beanStalk || !address}>
         Refresh view
@@ -193,16 +210,22 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
             <th>Recorded Price</th>
             <th>Direction</th>
             <th>Resolved</th>
+            <th>Ending Price</th>
+            <th>Outcome</th>
           </tr>
         </thead>
         <tbody>
           {rounds.map((round, i) => (
             <tr key={i}>
               <td>{new Date(Number(round.createdAt) * 1000).toLocaleString()}</td>
-              <td>{round.stakedAmount}</td>
-              <td>{round.currPrice}</td>
+              <td>{round.stakedAmount} BEAN</td>
+              <td>{formatPrice(round.currPrice)}</td>
               <td>{round.isHigher ? "Higher" : "Lower"}</td>
               <td>{round.hasResolved ? "Yes" : "No"}</td>
+              <td>{round.hasResolved ? formatPrice(round.endingPrice) : "-"}</td>
+              <td>
+                {round.hasResolved ? (round.correct ? "Won" : "Lost") : "-"}
+              </td>
             </tr>
           ))}
         </tbody>

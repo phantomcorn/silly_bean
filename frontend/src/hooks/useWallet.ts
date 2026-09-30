@@ -23,6 +23,27 @@ export interface WalletState {
   error: string | null;
 }
 
+// Remembers an explicit disconnect so refresh() doesn't silently reconnect
+// on reload or on accountsChanged/chainChanged events.
+const DISCONNECTED_KEY = "wallet:disconnected";
+
+function isManuallyDisconnected() {
+  try {
+    return localStorage.getItem(DISCONNECTED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function setManuallyDisconnected(value: boolean) {
+  try {
+    if (value) localStorage.setItem(DISCONNECTED_KEY, "1");
+    else localStorage.removeItem(DISCONNECTED_KEY);
+  } catch {
+    // Storage unavailable; disconnect still applies for this session.
+  }
+}
+
 export function useWallet() {
   const [state, setState] = useState<WalletState>({
     provider: null,
@@ -36,7 +57,9 @@ export function useWallet() {
   const refresh = useCallback(async () => {
     if (!window.ethereum) return;
     const provider = new BrowserProvider(window.ethereum);
-    const accounts = await provider.listAccounts();
+    const accounts = isManuallyDisconnected()
+      ? []
+      : await provider.listAccounts();
     if (accounts.length === 0) {
       setState((s) => ({
         ...s,
@@ -68,7 +91,19 @@ export function useWallet() {
     setState((s) => ({ ...s, isConnecting: true, error: null }));
     try {
       const provider = new BrowserProvider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
+      // eth_requestAccounts resolves silently if the site is already
+      // authorised, so ask for permissions to always show the wallet prompt.
+      try {
+        await window.ethereum.request({
+          method: "wallet_requestPermissions",
+          params: [{ eth_accounts: {} }],
+        });
+      } catch (err) {
+        // 4001 = user rejected; anything else = wallet lacks the method.
+        if ((err as { code?: number }).code === 4001) throw err;
+        await provider.send("eth_requestAccounts", []);
+      }
+      setManuallyDisconnected(false);
       const signer = await provider.getSigner();
       const network = await provider.getNetwork();
       const address = await signer.getAddress();
@@ -89,7 +124,18 @@ export function useWallet() {
     }
   }, []);
 
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback(async () => {
+    setManuallyDisconnected(true);
+    // Revoke the site's account permission in the wallet too (MetaMask
+    // supports this); ignore wallets that don't.
+    try {
+      await window.ethereum?.request({
+        method: "wallet_revokePermissions",
+        params: [{ eth_accounts: {} }],
+      });
+    } catch {
+      // Not supported — local disconnect is enough.
+    }
     setState({
       provider: null,
       signer: null,

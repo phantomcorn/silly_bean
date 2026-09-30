@@ -56,6 +56,19 @@
   },
   {
     "inputs": [],
+    "name": "getOracleDecimals",
+    "outputs": [
+      {
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getPredictionRounds",
     "outputs": [
       {
@@ -83,6 +96,16 @@
           {
             "internalType": "bool",
             "name": "isHigher",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "endingPrice",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "correct",
             "type": "bool"
           }
         ],
