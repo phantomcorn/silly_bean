@@ -78,12 +78,12 @@ contract BeanStalk {
 
     function getPredictionRounds() view external returns(Prediction[] memory) {
         uint LENGTH_LIMIT = 5;
-        uint256 limit = predictions.length < LENGTH_LIMIT ? predictions.length : LENGTH_LIMIT;
+        uint limit = predictions.length < LENGTH_LIMIT ? predictions.length : LENGTH_LIMIT;
         uint start = predictions.length - limit;
 
         Prediction[] memory limitedPredictions = new Prediction[](limit);
-        for (uint256 i = start; i < start + limit; i++) {
-            limitedPredictions[i] = predictions[i];
+        for (uint i = 0; i < limit; i++) {
+            limitedPredictions[i] = predictions[start + i];
         }
         
         return limitedPredictions;
@@ -105,9 +105,8 @@ contract BeanStalk {
     }
 
     function resolve() external {
-        uint index = predictions.length - 1;
-        require(index >= 0, "Cannot resolve without any prediction.");
-        Prediction storage currRound = predictions[index];
+        require(predictions.length > 0, "Cannot resolve without any prediction.");
+        Prediction storage currRound = predictions[predictions.length - 1];
         require(block.timestamp - currRound.createdAt >= 10, "Try again in 10 seconds.");
         require(!currRound.hasResolved, "Round has already ended.");
         bool expectation = currRound.isHigher;
@@ -131,6 +130,10 @@ contract BeanStalk {
     function getOraclePrice() internal view returns(uint) {
         (,int answer,,,) = priceFeed.latestRoundData();
         return uint(answer);
+    }
+
+    function getOracleDecimals() external view returns(uint8) {
+        return priceFeed.decimals();
     }
 
     function calculateReward(uint amount) internal pure returns(uint) {

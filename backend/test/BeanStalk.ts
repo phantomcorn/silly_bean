@@ -50,6 +50,11 @@ describe("BeanStalk", function () {
         expect(await beanstalk.getBeansOnTheHouse()).equals(0);
     })
 
+    it("Can get oracle decimals", async function () {
+        const {beanstalk} = await deploySystem();
+        expect(await beanstalk.getOracleDecimals()).equals(0);
+    })
+
 
     it("Initially, BeanStalk has no staked beans", async function() {
         const {bean, beanstalk} = await deploySystem();
@@ -89,12 +94,11 @@ describe("BeanStalk", function () {
         await stake(beanstalk, bean, p1, STAKE_AMOUNT);
 
         expect((await beanstalk.getPredictionRounds()).length).equals(0);
-        expect(beanstalk.resolve()).to.be.revertedWith("Cannot resolve without any prediction.");
+        await expect(beanstalk.resolve()).to.be.revertedWith("Cannot resolve without any prediction.");
     })
 
     it("Can make prediction and view", async function() {
         const {bean, beanstalk, p1} = await deploySystem();
-        
         await stake(beanstalk, bean, p1, STAKE_AMOUNT);
 
         expect((await beanstalk.getPredictionRounds()).length).equals(0);
@@ -109,12 +113,12 @@ describe("BeanStalk", function () {
     })
 
     it("Can view up to 5 latest round", async function () {
-        const {beanstalk} = await deploySystem();
+        const {beanstalk, bean, p1} = await deploySystem();
+        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
         for (let i = 0; i < ROUND_SIZE_LIMIT + 1; i++) {
             await beanstalk.lockInPredict(STAKE_AMOUNT, true);
         }
-        const predictions = await beanstalk.getPredictionRounds();
-        expect(predictions.length).equals(ROUND_SIZE_LIMIT);
+        expect((await beanstalk.getPredictionRounds()).length).equals(ROUND_SIZE_LIMIT);
     })
 
     it("Can lock in prediction with enough funds", async function() {
