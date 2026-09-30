@@ -38,7 +38,7 @@ Prediction market (BeanStalk): https://sepolia.etherscan.io/address/0xeC35e7A7fF
 
 - Wrote an ERC20-standard smart contract 
 - Wrote basic staking pool contract with fixed reward rate
-- Wrote basic prediction market contract to predict high/lower from current price pulled from a data feed.
+- Wrote basic prediction market contract to predict high/lower from current price pulled from a data feed (single player).
 - Wrote test cases for robustness
 - Connect contract to an RPC endpoint
 - Deployed contract on Ethereum Sepolia testnet
@@ -46,6 +46,21 @@ Prediction market (BeanStalk): https://sepolia.etherscan.io/address/0xeC35e7A7fF
 - Upgraded BEAN from Ownable to Access Control-based role so both farm and bean stalk can mint more beans.
 - Test oracle network integration by mocking data feed
 - Simulate time by mocking
+
+# Challenges
+
+### Problem 1
+Every 10 second, a signature is required to update ETH/USD price. This is not ideal if the user has to sign the transaction everytime.
+
+Solution 1: Backend cron job which signs and update the ETH/USD price. 
+
+Problem with this is you are spending gas fees every 10 sec.
+
+Solution 2: Remodelled the game as a Lock-in prediction -> wait window time -> Resolve prediction rather than a One-click predict-reward.
+
+User has to wait a certain period of time before they know the outcome
+
+We went for the 2nd solution since this is the standard ([PancakeSwap's Up/Down game](https://pancakeswap.finance/prediction?token=ETH))
 
 # What I learnt
 
