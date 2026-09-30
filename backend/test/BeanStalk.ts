@@ -9,22 +9,17 @@ const { ethers, networkHelpers } = await network.create();
 
 const STAKE_AMOUNT = 2;
 const REWARD_MULTIPLIER = 2;
-const REFRESH_TIMEOUT = 10;
+const CAN_RESOLVE_AFTER = 10;
+const ORIGINAL_PRICE = 5000;
 
 async function deploySystem() {
     const [p1, p2, p3] = await ethers.getSigners();
     const bean = await ethers.deployContract("DiscreteBean");
-    const mockFeed = await ethers.deployContract("MockV3Aggregator", [0, 5000]); 
+    const mockFeed = await ethers.deployContract("MockV3Aggregator", [0, ORIGINAL_PRICE]); 
     const beanstalk = await ethers.deployContract("BeanStalk", [await bean.getAddress(), await mockFeed.getAddress()]);
 
-    await byPassRefreshCooldown(beanstalk);
     await bean.setMinter(await beanstalk.getAddress()); //beanstalk can mint
     return {bean, beanstalk, mockFeed, p1, p2, p3}
-}
-
-async function byPassRefreshCooldown(beanstalk: BeanStalk) {
-    await beanstalk.refresh() //update view price to whatever price feed is
-    await networkHelpers.time.increase(REFRESH_TIMEOUT);
 }
 
 async function stake(beanstalk: BeanStalk, bean: DiscreteBean, staker: HardhatEthersSigner, amount: number) {
@@ -87,95 +82,129 @@ describe("BeanStalk", function () {
         expect(await beanstalk.connect(p1).getAmountStake()).equals(0)     
     })
 
-    it("Can use oracle network", async function() {
-        const {beanstalk, mockFeed} = await deploySystem();
+    it("Cannot resolve without any prediction", async function() {
 
-        expect(await beanstalk.getCurrPrice()).equals(5000);
-        mockFeed.updateAnswer(3000); //update oracle network feed 
-        expect(await beanstalk.getCurrPrice()).equals(5000); //should not update to datafeed unless refresh is called
-        await beanstalk.refresh(); // should update to match oracle network feed
-        expect(await beanstalk.getCurrPrice()).equals(3000);
     })
 
-    it("Predict high when price increase should reward bean and update price", async function() {
+    it("Can make prediction and view", async function() {
+
+    })
+
+    it("Can view up to 5 latest round", async function () {
+
+    })
+
+    it("Can lock in prediction with enough funds", async function() {
         const {bean, beanstalk, mockFeed, p1} = await deploySystem();
-        const NEW_PRICE = 8000;
 
         await stake(beanstalk, bean, p1, STAKE_AMOUNT);
         expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT);
-        expect(await beanstalk.getCurrPrice()).equals(5000); //user seeing 5000
-        await mockFeed.updateAnswer(NEW_PRICE); //simulate price increase (user does not see this)
-
-        //stakes 2 BEAN and predicts higher
-        await beanstalk.predict(STAKE_AMOUNT, true); 
-
-        const reward = STAKE_AMOUNT * REWARD_MULTIPLIER
-        expect(await beanstalk.getEarnSoFar()).equals(reward);
-        expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT + reward);
-
-        //should also update user-facing price
-        expect(await beanstalk.getCurrPrice()).equals(NEW_PRICE);
+        await beanstalk.lockInPredict(STAKE_AMOUNT, true); 
     })
 
-    it("Predict low when price decrease should reward bean and update price", async function() {
-        const {bean, beanstalk, mockFeed, p1} = await deploySystem();
-        const NEW_PRICE = 3000;
-
-        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
-        expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT);
-        expect(await beanstalk.getCurrPrice()).equals(5000); //user seeing 5000
-        await mockFeed.updateAnswer(NEW_PRICE); //simulate price increase (user does not see this)
-
-        //stakes 2 BEAN and predicts lower
-        await beanstalk.predict(STAKE_AMOUNT, false); 
-        
-        const reward = STAKE_AMOUNT * REWARD_MULTIPLIER
-        expect(await beanstalk.getEarnSoFar()).equals(reward);
-        expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT + reward);
-
-        //should also update user-facing price
-        expect(await beanstalk.getCurrPrice()).equals(NEW_PRICE);
-    })
-
-    it("Price won't update before 10 sec has passed", async function () {
-        const {bean, beanstalk, mockFeed, p1} = await deploySystem();
-
-        expect(await beanstalk.refresh());
-        expect(beanstalk.refresh()).to.be.revertedWith("Cannot refresh.");
-    })
-
-    it("Price updates every 10 sec", async function () {
-        const {bean, beanstalk, mockFeed, p1} = await deploySystem();
-        expect(await beanstalk.refresh());
-        networkHelpers.time.increase(REFRESH_TIMEOUT);
-        expect(await beanstalk.refresh());
-    })
-
-    it("Wrong prediction loses bean and update price", async function() {
-        const {bean, beanstalk, mockFeed, p1} = await deploySystem();
-        const NEW_PRICE = 3000;
-        const BET_AMOUNT = 1;
-
-        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
-        await mockFeed.updateAnswer(NEW_PRICE); //simulate price increase (user does not see this)
-
-        expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT);
-        expect(await beanstalk.getCurrPrice()).equals(5000); //user seeing 5000
-        expect(await beanstalk.getBeansOnTheHouse()).equals(0);
-        //stakes 2 BEAN and predicts higher
-        await beanstalk.predict(BET_AMOUNT, true);
-
-        expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT - BET_AMOUNT);
-        expect(await beanstalk.getBeansOnTheHouse()).equals(BET_AMOUNT);
-        expect(await beanstalk.getCurrPrice()).equals(NEW_PRICE); //user seeing 5000
-    })
-
-
-    it("Cannot predict with more beans than staked amount", async function() {
+    it("Cannot lock in prediction without enough funds", async function() {
         const {bean, beanstalk, p1} = await deploySystem();
 
         await stake(beanstalk, bean, p1, STAKE_AMOUNT);
         expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT);
-        await expect(beanstalk.predict(STAKE_AMOUNT + 1, true)).to.be.revertedWith("Insufficient funds.");
+        await expect(beanstalk.lockInPredict(STAKE_AMOUNT + 1, true)).to.be.revertedWith("Insufficient funds.");
     })
+
+    // it("Can use oracle network", async function() {
+    //     const {beanstalk, mockFeed} = await deploySystem();
+
+    //     expect(await beanstalk.getCurrPrice()).equals(5000);
+    //     mockFeed.updateAnswer(3000); //update oracle network feed 
+    //     expect(await beanstalk.getCurrPrice()).equals(5000); //should not update to datafeed unless refresh is called
+    // })
+
+    it("Can be resolved if called after 10 seconds of lockInPredict", async function () {
+        const {bean, beanstalk, p1} = await deploySystem();
+        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
+
+        await beanstalk.lockInPredict(STAKE_AMOUNT, false); 
+        
+        expect((await beanstalk.getPredictionRounds())[0].hasResolved).equals(false)
+        
+        await networkHelpers.time.increase(CAN_RESOLVE_AFTER);
+        await beanstalk.resolve();
+
+        expect((await beanstalk.getPredictionRounds())[0].hasResolved).equals(true)
+    })
+
+    it("Cannot resolve if called before 10 seconds of lockInPredict", async function () {
+        const {bean, beanstalk, mockFeed, p1} = await deploySystem();
+        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
+        await beanstalk.lockInPredict(STAKE_AMOUNT, false); 
+
+        expect(beanstalk.resolve()).to.be.revertedWith("Try again in 10 seconds.");
+    })
+
+    it("Cannot resolve an already resolved prediction round", async function () {
+        const {bean, beanstalk, p1} = await deploySystem();
+        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
+
+        await beanstalk.lockInPredict(STAKE_AMOUNT, false); 
+        networkHelpers.time.increase(CAN_RESOLVE_AFTER);
+        await beanstalk.resolve();
+
+        expect((await beanstalk.getPredictionRounds())[0].hasResolved).equals(true);
+        expect(beanstalk.resolve()).to.revertedWith("Round has already ended.");
+    })
+
+    it("Predict high when price increase should reward bean and update price", async function() {
+        const {bean, beanstalk, mockFeed, p1} = await deploySystem();
+        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
+        //lock in prediction of 2 BEAN and predicts higher
+        await beanstalk.lockInPredict(STAKE_AMOUNT, true); 
+        await mockFeed.updateAnswer(ORIGINAL_PRICE + 3000); //simulate price increase (user does not see this)
+        
+        expect(await beanstalk.getEarnSoFar()).equals(0);
+        expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT);
+        
+        await networkHelpers.time.increase(CAN_RESOLVE_AFTER)
+        await beanstalk.resolve();
+
+        const reward = STAKE_AMOUNT * REWARD_MULTIPLIER
+        expect(await beanstalk.getEarnSoFar()).equals(reward);
+        expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT + reward);
+    })
+
+    it("Predict low when price decrease should reward bean and update price", async function() {
+        const {bean, beanstalk, mockFeed, p1} = await deploySystem();
+        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
+        //lock in prediction of 2 BEAN and predicts lower
+        await beanstalk.lockInPredict(STAKE_AMOUNT, false); 
+        await mockFeed.updateAnswer(ORIGINAL_PRICE - 3000); //simulate price decrease (user does not see this)
+        
+        expect(await beanstalk.getEarnSoFar()).equals(0);
+        expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT);
+        
+        await networkHelpers.time.increase(CAN_RESOLVE_AFTER)
+        await beanstalk.resolve();
+
+        const reward = STAKE_AMOUNT * REWARD_MULTIPLIER
+        expect(await beanstalk.getEarnSoFar()).equals(reward);
+        expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT + reward);
+    })
+
+    it("Wrong prediction loses bean and update price", async function() {
+        const {bean, beanstalk, mockFeed, p1} = await deploySystem();
+        const BET_AMOUNT = 1;
+
+        await stake(beanstalk, bean, p1, STAKE_AMOUNT);
+        await beanstalk.lockInPredict(BET_AMOUNT, false); //predicts decrease -> will predict incorrectly
+        await mockFeed.updateAnswer(ORIGINAL_PRICE + 3000); //simulate price increase (user does not see this)
+
+        expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT);
+        expect(await beanstalk.getBeansOnTheHouse()).equals(0);
+
+        //stakes 2 BEAN and predicts higher
+        await networkHelpers.time.increase(CAN_RESOLVE_AFTER);
+        await beanstalk.resolve();
+
+        expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT - BET_AMOUNT);
+        expect(await beanstalk.getBeansOnTheHouse()).equals(BET_AMOUNT);
+    })
+
 });

@@ -19,10 +19,17 @@ contract BeanStalk {
         uint stakedAmount;
         uint earnSoFar;
     }
-    uint currPrice;
-    uint lastUpdated;
+    struct Prediction {
+        bool hasResolved;
+        uint stakedAmount;
+        uint currPrice;
+        uint createdAt;
+        bool isHigher;
+    }
+
     uint beansOnTheHouse;
     mapping(address => StakedBalance) stakedBalance;
+    Prediction[] predictions;
     
     constructor(address beanContractAddress, address ethUsdAddress) {
         beanContract = BeanInterface(beanContractAddress);
@@ -66,31 +73,48 @@ contract BeanStalk {
         return stakedBalance[msg.sender].earnSoFar;
     }
 
-    function getCurrPrice() view external returns(uint) {
-        return currPrice;
+    function getPredictionRounds() view external returns(Prediction[] memory) {
+        uint LENGTH_LIMIT = 5;
+        uint256 limit = predictions.length < LENGTH_LIMIT ? predictions.length : LENGTH_LIMIT;
+        uint start = predictions.length - limit;
+
+        Prediction[] memory limitedPredictions = new Prediction[](limit);
+        for (uint256 i = start; i < start + limit; i++) {
+            limitedPredictions[i] = predictions[i];
+        }
+        
+        return limitedPredictions;
     }
 
     function getBeansOnTheHouse() view external returns(uint) {
         return beansOnTheHouse;
     }
 
-    function predict(uint amount, bool higher) external {
+    function lockInPredict(uint amount, bool higher) external {
         require(stakedBalance[msg.sender].stakedAmount >= amount, "Insufficient funds.");
+        //Single player (1 player = 1 round)
+        predictions.push(Prediction(false, amount, getOraclePrice(), block.timestamp, higher));
+    }
 
-        uint newPrice = getOraclePrice();
-        bool isHigher = newPrice > currPrice;
-        bool correct = (higher && isHigher) || (!higher && !isHigher);
+    function resolve() external {
+        uint index = predictions.length - 1;
+        require(index >= 0, "Cannot resolve without any prediction.");
+        Prediction storage currRound = predictions[index];
+        require(block.timestamp - currRound.createdAt >= 10, "Try again in 10 seconds.");
+        require(!currRound.hasResolved, "Round has already ended.");
+        bool expectation = currRound.isHigher;
+        bool actual = getOraclePrice() > currRound.currPrice;
+        bool correct = (expectation && actual) || (!expectation && !actual);
         if (correct) {
-            uint reward = amount*2;
+            uint reward = calculateReward(currRound.stakedAmount);
             beanContract.mint(address(this), reward);
             stakedBalance[msg.sender].stakedAmount += reward;
             stakedBalance[msg.sender].earnSoFar += reward;
         } else {
-            stakedBalance[msg.sender].stakedAmount -= amount;
-            beansOnTheHouse += amount;
+            stakedBalance[msg.sender].stakedAmount -= currRound.stakedAmount;
+            beansOnTheHouse += currRound.stakedAmount;
         }
-        currPrice = getOraclePrice();
-        lastUpdated = block.timestamp;
+        currRound.hasResolved = true;
     }
 
     function getOraclePrice() internal view returns(uint) {
@@ -98,10 +122,7 @@ contract BeanStalk {
         return uint(answer);
     }
 
-    function refresh() public {
-        require(block.timestamp - lastUpdated >= 10, "Cannot refresh.");
-
-        currPrice = getOraclePrice();
-        lastUpdated = block.timestamp;
+    function calculateReward(uint amount) internal pure returns(uint) {
+        return amount*2;
     }
 }   
