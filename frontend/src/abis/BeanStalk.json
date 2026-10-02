@@ -74,6 +74,11 @@
       {
         "components": [
           {
+            "internalType": "uint256",
+            "name": "roundNum",
+            "type": "uint256"
+          },
+          {
             "internalType": "bool",
             "name": "hasResolved",
             "type": "bool"
@@ -109,7 +114,7 @@
             "type": "bool"
           }
         ],
-        "internalType": "struct BeanStalk.Prediction[]",
+        "internalType": "struct PredictionQueue.Round[]",
         "name": "",
         "type": "tuple[]"
       }

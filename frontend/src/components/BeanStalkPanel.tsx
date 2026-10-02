@@ -10,6 +10,7 @@ interface Props {
 }
 
 interface PredictionRound {
+  roundNum: string;
   hasResolved: boolean;
   stakedAmount: string;
   currPrice: string;
@@ -49,6 +50,7 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
     setEarnSoFar(earned.toString());
     setRounds(
       predictionRounds.map((round: PredictionRound) => ({
+        roundNum: round.roundNum.toString(),
         hasResolved: round.hasResolved,
         stakedAmount: round.stakedAmount.toString(),
         currPrice: round.currPrice.toString(),

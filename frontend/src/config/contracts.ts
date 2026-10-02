@@ -11,7 +11,7 @@ export const CONTRACT_ADDRESSES = {
     "0xe49bba42f5AF5Fb6d82DDFa7ad75DBEAde34Fa97",
   beanStalk:
     import.meta.env.VITE_BEAN_STALK_ADDRESS ??
-    "0x36a54d778b4e1d5F30Bde98017fa67f80A919f6D",
+    "0x2cF60F3fAeB5043bfc9d16260043F860c6838026",
 } as const;
 
 export const ETH_USD_PRICE_FEED_ADDRESS =
