@@ -107,6 +107,7 @@ describe("BeanStalk", function () {
 
         const predictions = await beanstalk.getPredictionRounds();
         expect(predictions.length).equals(1);
+        expect(predictions[0].roundNum).equals(1)
         expect(predictions[0].hasResolved).equals(false);
         expect(predictions[0].stakedAmount).equals(2);
         expect(predictions[0].currPrice).equals(ORIGINAL_PRICE);
@@ -137,14 +138,6 @@ describe("BeanStalk", function () {
         expect(await beanstalk.getAmountStake()).equals(STAKE_AMOUNT);
         await expect(beanstalk.lockInPredict(STAKE_AMOUNT + 1, true)).to.be.revertedWith("Insufficient funds.");
     })
-
-    // it("Can use oracle network", async function() {
-    //     const {beanstalk, mockFeed} = await deploySystem();
-
-    //     expect(await beanstalk.getCurrPrice()).equals(5000);
-    //     mockFeed.updateAnswer(3000); //update oracle network feed 
-    //     expect(await beanstalk.getCurrPrice()).equals(5000); //should not update to datafeed unless refresh is called
-    // })
 
     it("Can be resolved if called after 10 seconds of lockInPredict", async function () {
         const {bean, beanstalk, p1} = await deploySystem();

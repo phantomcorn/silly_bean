@@ -6,7 +6,7 @@ Token (Discrete Bean): https://sepolia.etherscan.io/address/0x8e8e07ca4179Bc1fFb
 
 Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0xe49bba42f5AF5Fb6d82DDFa7ad75DBEAde34Fa97
 
-Prediction market (BeanStalk): https://sepolia.etherscan.io/address/0x36a54d778b4e1d5F30Bde98017fa67f80A919f6D
+Prediction market (BeanStalk): https://sepolia.etherscan.io/address/0x2cF60F3fAeB5043bfc9d16260043F860c6838026
 
 # Discrete Bean (Token)
 
@@ -46,6 +46,7 @@ Prediction market (BeanStalk): https://sepolia.etherscan.io/address/0x36a54d778b
 - Upgraded BEAN from Ownable to Access Control-based role so both farm and bean stalk can mint more beans.
 - Test oracle network integration by mocking data feed
 - Simulate time by mocking
+- Wrote queue(FIFO) data structure to store predictions
 
 # Challenges
 
@@ -61,6 +62,11 @@ Solution 2: Remodelled the game as a Lock-in prediction -> wait window time -> R
 User has to wait a certain period of time before they know the outcome
 
 We went for the 2nd solution since this is the standard ([PancakeSwap's Up/Down game](https://pancakeswap.finance/prediction?token=ETH))
+
+### Problem 2
+Our initial solution of Bean Stalk uses native array to store the predictions. As more predictions are added, the array can grow indefinitely. Setting a size limit is also a possible solution however this means once the array reaches the limit we have to remove the oldest element takes O(1) time complexity but also shift each element down. This takes O(n) time complexity.
+
+Solution: Use queue (FIFO) from @openzeppelin/contracts. This means O(1) push and pop operation. 
 
 # What I learnt
 

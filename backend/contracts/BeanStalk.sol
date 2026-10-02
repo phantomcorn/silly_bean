@@ -33,6 +33,7 @@ contract BeanStalk {
     }
     
     uint beansOnTheHouse;
+    uint nextRoundNum;
     mapping(address => StakedBalance) stakedBalance;
     PredictionQueue queue;
     
@@ -40,6 +41,7 @@ contract BeanStalk {
         beanContract = BeanInterface(beanContractAddress);
         priceFeed = AggregatorV3Interface(ethUsdAddress);
         queue = new PredictionQueue();
+        nextRoundNum = 1;
     }
 
     /*
@@ -102,11 +104,13 @@ contract BeanStalk {
         //Single player (1 player = 1 round)
 
         PredictionQueue.Round memory newRound;
+        newRound.roundNum = nextRoundNum;
         newRound.createdAt = block.timestamp;
         newRound.currPrice = getOraclePrice();
         newRound.stakedAmount = amount;
         newRound.isHigher = higher;
         queue.enqueue(newRound);
+        nextRoundNum++;
     }
 
     function resolve() external {

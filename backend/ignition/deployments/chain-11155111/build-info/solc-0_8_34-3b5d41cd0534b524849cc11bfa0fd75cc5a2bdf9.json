@@ -1,0 +1,57 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_34-3b5d41cd0534b524849cc11bfa0fd75cc5a2bdf9",
+  "solcVersion": "0.8.34",
+  "solcLongVersion": "0.8.34+commit.80d5c536",
+  "compilerType": "solc",
+  "toolVersions": {
+    "hardhat": "3.18.0"
+  },
+  "userSourceNameMap": {
+    "contracts/BeanStalk.sol": "project/contracts/BeanStalk.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "osaka",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode.linkReferences",
+            "evm.bytecode.object",
+            "evm.bytecode.opcodes",
+            "evm.bytecode.sourceMap",
+            "evm.deployedBytecode.immutableReferences",
+            "evm.deployedBytecode.linkReferences",
+            "evm.deployedBytecode.object",
+            "evm.deployedBytecode.opcodes",
+            "evm.deployedBytecode.sourceMap",
+            "evm.methodIdentifiers"
+          ]
+        }
+      },
+      "remappings": [
+        "project/:@chainlink/contracts/=npm/@chainlink/contracts@1.5.0/"
+      ]
+    },
+    "sources": {
+      "npm/@chainlink/contracts@1.5.0/src/v0.8/shared/interfaces/AggregatorV3Interface.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\n// solhint-disable-next-line interface-starts-with-i\ninterface AggregatorV3Interface {\n  function decimals() external view returns (uint8);\n\n  function description() external view returns (string memory);\n\n  function version() external view returns (uint256);\n\n  function getRoundData(\n    uint80 _roundId\n  ) external view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);\n\n  function latestRoundData()\n    external\n    view\n    returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);\n}\n"
+      },
+      "project/contracts/BeanStalk.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\nimport {AggregatorV3Interface} from \"@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol\";\nimport {PredictionQueue} from \"./PredictionQueue.sol\";\n\ninterface BeanInterface {\n    function mint(address to, uint amount) external;\n    function balanceOf(address account) external returns(uint);\n    function transfer(address to, uint amount) external;\n    function transferFrom(address from, address to, uint value) external;\n}\n// struct PredictionQueue.PredictionRound {\n//     uint roundNum;\n//     bool hasResolved;\n//     uint stakedAmount;\n//     uint currPrice;\n//     uint createdAt;\n//     bool isHigher;\n//     uint endingPrice; //assigned once resolved\n//     bool correct; //assigned once resolved\n// }\n\n//ETH/USD price feed address: 0x694AA1769357215DE4FAC081bf1f309aDC325306\ncontract BeanStalk {\n\n    BeanInterface beanContract;\n    AggregatorV3Interface priceFeed;\n\n    struct StakedBalance {\n        uint stakedAmount;\n        uint earnSoFar;\n    }\n    \n    uint beansOnTheHouse;\n    mapping(address => StakedBalance) stakedBalance;\n    PredictionQueue queue;\n    \n    constructor(address beanContractAddress, address ethUsdAddress) {\n        beanContract = BeanInterface(beanContractAddress);\n        priceFeed = AggregatorV3Interface(ethUsdAddress);\n        queue = new PredictionQueue();\n    }\n\n    /*\n        Usually when UI press stake 2 things are called\n            1. approve(this.address, amount) \n            2. stake(amount) <- This function\n    */\n    function stake(uint amount) external {\n        require(beanContract.balanceOf(msg.sender) >= amount, \"Insufficient funds.\");\n        //approve(this.address, amount) already called\n        beanContract.transferFrom(msg.sender, address(this), amount);\n        //add to stakedBalance\n        StakedBalance storage staker = stakedBalance[msg.sender];\n        staker.stakedAmount = amount;\n    }\n\n    function unstake(uint amount) external {\n        // Must have more beans than unstaked amount\n        require(stakedBalance[msg.sender].stakedAmount >= amount, \"Insufficient funds.\");\n        // Transfer back staked to account\n        beanContract.transfer(msg.sender, amount);\n        \n        if (amount == stakedBalance[msg.sender].stakedAmount) {\n            // Reset staking balance to default value\n            delete stakedBalance[msg.sender];\n        } else {\n            stakedBalance[msg.sender].stakedAmount -= amount;\n        }\n        \n    }\n\n    function getAmountStake() view external returns(uint) {\n        return stakedBalance[msg.sender].stakedAmount;\n    }\n\n    function getEarnSoFar() view external returns(uint) {\n        return stakedBalance[msg.sender].earnSoFar;\n    }\n\n    function getPredictionRounds() view external returns(PredictionQueue.Round[] memory) {\n        uint LENGTH_VIEW_LIMIT = 5;\n\n        uint size = queue.size();\n        uint limit = size < LENGTH_VIEW_LIMIT ? size : LENGTH_VIEW_LIMIT;\n\n        PredictionQueue.Round[] memory limitedPredictions = new PredictionQueue.Round[](limit);\n        for (uint i = 0; i < limit; i++) {\n            limitedPredictions[i] = queue.tailAt(i);\n        }\n    \n        return limitedPredictions;\n    }\n\n    function getBeansOnTheHouse() view external returns(uint) {\n        return beansOnTheHouse;\n    }\n\n    function lockInPredict(uint amount, bool higher) external {\n        require(stakedBalance[msg.sender].stakedAmount >= amount, \"Insufficient funds.\");\n        //Single player (1 player = 1 round)\n\n        PredictionQueue.Round memory newRound;\n        newRound.createdAt = block.timestamp;\n        newRound.currPrice = getOraclePrice();\n        newRound.stakedAmount = amount;\n        newRound.isHigher = higher;\n        queue.enqueue(newRound);\n    }\n\n    function resolve() external {\n        require(queue.size() > 0, \"Cannot resolve without any prediction.\");\n        PredictionQueue.Round memory currRound = queue.tail();\n        require(block.timestamp - currRound.createdAt >= 10, \"Try again in 10 seconds.\");\n        require(!currRound.hasResolved, \"Round has already ended.\");\n        bool expectation = currRound.isHigher;\n        uint actualPrice = getOraclePrice();\n        bool actual = actualPrice > currRound.currPrice;\n        bool correct = (expectation && actual) || (!expectation && !actual);\n        if (correct) {\n            uint reward = calculateReward(currRound.stakedAmount);\n            beanContract.mint(address(this), reward);\n            stakedBalance[msg.sender].stakedAmount += reward;\n            stakedBalance[msg.sender].earnSoFar += reward;\n        } else {\n            stakedBalance[msg.sender].stakedAmount -= currRound.stakedAmount;\n            beansOnTheHouse += currRound.stakedAmount;\n        }\n        queue.resolveLatestRound(correct, actualPrice);\n    }\n\n    function getOraclePrice() internal view returns(uint) {\n        (,int answer,,,) = priceFeed.latestRoundData();\n        return uint(answer);\n    }\n\n    function getOracleDecimals() external view returns(uint8) {\n        return priceFeed.decimals();\n    }\n\n    function calculateReward(uint amount) internal pure returns(uint) {\n        return amount*2;\n    }\n\n}   "
+      },
+      "project/contracts/PredictionQueue.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\ncontract PredictionQueue {\n\n    struct Round {\n        uint roundNum;\n        bool hasResolved;\n        uint stakedAmount;\n        uint currPrice;\n        uint createdAt;\n        bool isHigher;\n        uint endingPrice; //assigned once resolved\n        bool correct; //assigned once resolved\n    }\n\n    address private immutable owner;\n    mapping(uint => Round) predictionRounds;\n    uint private front;\n    uint private back;\n    uint private SIZE_OF_QUEUE = 20;\n\n    event RoundEnqueued(uint roundNum);\n    event RoundDequeued(uint roundNum);\n\n    constructor() {\n        front = 0; //front of queue [front.....back]\n        back = 0;  //back of queue\n        owner = msg.sender;\n    }\n\n    modifier onlyOwner() {\n        require(msg.sender == owner, \"Not owner\");\n        _;\n    }\n\n    modifier notEmpty() {\n        require(size() > 0, \"Empty\");\n        _;\n    }\n\n    function enqueue(Round memory predictionRound) external onlyOwner {\n        if (size() == SIZE_OF_QUEUE) {\n            dequeue();\n        }\n        //add to back of queue\n        predictionRounds[back] = predictionRound;\n        back++;\n        emit RoundEnqueued(predictionRound.roundNum);\n    }\n\n    function dequeue() public onlyOwner notEmpty {\n        Round memory result = predictionRounds[front];\n        delete predictionRounds[front];\n        front++;\n        emit RoundDequeued(result.roundNum);\n    }\n\n    function size() public view onlyOwner returns(uint) {\n        return back - front;\n    }\n\n\n    function tail() external view onlyOwner notEmpty returns(Round memory) {\n        return predictionRounds[back - 1];\n    }\n\n    function tailAt(uint position) external view onlyOwner notEmpty returns(Round memory)  { \n        //position is relative from the back i.e position=0 returns last, position=1 returns the second last, ...\n        require(position < size(), \"Out of bounds\");\n        return predictionRounds[back - 1 - position];\n    }\n\n    function resolveLatestRound(bool correct, uint actualPrice) external onlyOwner notEmpty{\n        Round storage currRound = predictionRounds[back - 1];\n        currRound.endingPrice = actualPrice;\n        currRound.hasResolved = true;\n        currRound.correct = correct;\n    }\n}"
+      }
+    }
+  }
+}
