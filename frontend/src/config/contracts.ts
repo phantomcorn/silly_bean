@@ -5,13 +5,13 @@ export const SEPOLIA_CHAIN_ID_HEX = "0xaa36a7";
 export const CONTRACT_ADDRESSES = {
   discreteBean:
     import.meta.env.VITE_DISCRETE_BEAN_ADDRESS ??
-    "0x9f2B1530F67f1f4FF8A94bDCcBc07F6aC8689cA2",
+    "0x8e8e07ca4179Bc1fFb35e79Ab71ab7EEAe334Cf4",
   regularFarm:
     import.meta.env.VITE_REGULAR_FARM_ADDRESS ??
-    "0x92b7395188042CC13B7c967f7Eed9295Cf1D803D",
+    "0xe49bba42f5AF5Fb6d82DDFa7ad75DBEAde34Fa97",
   beanStalk:
     import.meta.env.VITE_BEAN_STALK_ADDRESS ??
-    "0x4Bc2656660cE7CE8D267f20591dC07B575Bc6474",
+    "0x36a54d778b4e1d5F30Bde98017fa67f80A919f6D",
 } as const;
 
 export const ETH_USD_PRICE_FEED_ADDRESS =

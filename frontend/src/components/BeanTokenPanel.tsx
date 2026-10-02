@@ -11,6 +11,8 @@ interface Props {
 export function BeanTokenPanel({ discreteBean, address }: Props) {
   const [balance, setBalance] = useState<string | null>(null);
   const [totalSupply, setTotalSupply] = useState<string | null>(null);
+  const [hasClaimed, setHasClaimed] = useState<boolean | null>(null);
+  const [freeLimit, setFreeLimit] = useState<string | null>(null);
 
   const [transferTo, setTransferTo] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
@@ -24,17 +26,30 @@ export function BeanTokenPanel({ discreteBean, address }: Props) {
 
   const loadData = useCallback(async () => {
     if (!discreteBean || !address) return;
-    const [bal, supply] = await Promise.all([
+    const [bal, supply, claimed, limit] = await Promise.all([
       discreteBean.balanceOf(address),
       discreteBean.totalSupply(),
+      discreteBean.hasClaim(address),
+      discreteBean.FREE_REDEMPTION_LIMIT(),
     ]);
     setBalance(bal.toString());
     setTotalSupply(supply.toString());
+    setHasClaimed(claimed);
+    setFreeLimit(limit.toString());
   }, [discreteBean, address]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const handleClaim = () =>
+    status.run(async () => {
+      if (!discreteBean) throw new Error("Contract not ready.");
+      const tx = await discreteBean.claimFreeBean();
+      await tx.wait();
+      status.setMessage(`Claimed ${freeLimit ?? ""} free BEAN`);
+      await loadData();
+    });
 
   const handleTransfer = () =>
     status.run(async () => {
@@ -71,6 +86,20 @@ export function BeanTokenPanel({ discreteBean, address }: Props) {
       <button onClick={loadData} disabled={!discreteBean || !address}>
         Refresh
       </button>
+
+      <h3>Claim free beans</h3>
+      <div>
+        {hasClaimed ? (
+          <p>You have already claimed your free beans.</p>
+        ) : (
+          <button
+            onClick={handleClaim}
+            disabled={status.busy || !discreteBean || !address || hasClaimed === null}
+          >
+            Claim {freeLimit ?? "-"} free BEAN
+          </button>
+        )}
+      </div>
 
       <h3>Transfer</h3>
       <div>
