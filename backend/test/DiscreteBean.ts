@@ -24,9 +24,9 @@ describe("DiscreteBean", function () {
     expect(await contract.decimals()).equals(0);
   })
 
-  it("Should get 3 as initial supply", async function () {
+  it("Should get 0 as initial supply", async function () {
     const contract = await ethers.deployContract("DiscreteBean");
-    expect(await contract.totalSupply()).equals(3);
+    expect(await contract.totalSupply()).equals(0);
   })
 
   it("Contract deployer is admin", async function () {
@@ -37,15 +37,38 @@ describe("DiscreteBean", function () {
     expect(await contract.hasRole(adminRole, deployer.address)).equals(true);
   })
 
-  it("Initial balance of deployer is 3", async function() {
+  it("Initial balance of deployer is 0", async function() {
     const [deployer, p2, p3] = await ethers.getSigners()
     const contract = await ethers.deployContract("DiscreteBean");
+    expect(await contract.balanceOf(deployer.address)).equals(0);
+  })
+
+  it("New address can claim free BEAN", async function() {
+    const [deployer, p2, p3] = await ethers.getSigners()
+    const contract = await ethers.deployContract("DiscreteBean");
+
+    expect(await contract.balanceOf(deployer.address)).equals(0);
+    await contract.claimFreeBean();
     expect(await contract.balanceOf(deployer.address)).equals(3);
+
+    expect(await contract.balanceOf(p2.address)).equals(0);
+    await contract.connect(p2).claimFreeBean();
+    expect(await contract.balanceOf(p2.address)).equals(3);
+  })
+
+  it("Cannot claim free BEAN twice", async function() {
+    const [deployer, p2, p3] = await ethers.getSigners()
+    const contract = await ethers.deployContract("DiscreteBean");
+    expect(await contract.balanceOf(p2.address)).equals(0);
+    await contract.connect(p2).claimFreeBean();
+    expect(await contract.balanceOf(p2.address)).equals(3);
+    await expect(contract.connect(p2).claimFreeBean()).to.be.revertedWith("You have already redeemed your free bean.");
   })
 
   it("Transfer ok", async function () {
     const [sender, reciever, p3] = await ethers.getSigners()
     const contract = await ethers.deployContract("DiscreteBean");
+    await contract.claimFreeBean();
 
     expect(await contract.balanceOf(sender.address)).equals(3);
 
@@ -58,6 +81,7 @@ describe("DiscreteBean", function () {
   it("Transfer bad if insufficient fund", async function () {
     const [sender, reciever, p3] = await ethers.getSigners()
     const contract = await ethers.deployContract("DiscreteBean");
+    await contract.claimFreeBean();
     
     expect(await contract.balanceOf(sender.address)).equals(3);
 
@@ -69,6 +93,8 @@ describe("DiscreteBean", function () {
   it("Transfer on behalf ok", async function () {
     const [sender, defi_swap, reciever] = await ethers.getSigners();
     const contract = await ethers.deployContract("DiscreteBean");
+    await contract.claimFreeBean();
+
     expect(await contract.balanceOf(sender.address)).equals(3)
     expect(await contract.balanceOf(reciever.address)).equals(0)
     
@@ -85,6 +111,8 @@ describe("DiscreteBean", function () {
   it("Transfer on behalf bad if insufficient fund", async function () {
     const [sender, defi_swap, reciever] = await ethers.getSigners();
     const contract = await ethers.deployContract("DiscreteBean");
+    await contract.claimFreeBean();
+
     expect(await contract.balanceOf(sender.address)).equals(3)
     expect(await contract.balanceOf(reciever.address)).equals(0)
     
@@ -104,6 +132,8 @@ describe("DiscreteBean", function () {
   it("Burn ok", async function() {
     const [p1, _] = await ethers.getSigners();
     const contract = await ethers.deployContract("DiscreteBean");
+    await contract.claimFreeBean();
+
     expect(await contract.totalSupply()).equals(3);
     expect(await contract.balanceOf(p1.address)).equals(3);
 
@@ -116,6 +146,7 @@ describe("DiscreteBean", function () {
   it("Burn bad if insufficient fund", async function () {
     const [p1, _] = await ethers.getSigners();
     const contract = await ethers.deployContract("DiscreteBean");
+    await contract.claimFreeBean();
 
     expect(await contract.balanceOf(p1.address)).equals(3);
     await expect(contract.burn(4)).to.be.revertedWithCustomError(contract, "ERC20InsufficientBalance");
@@ -124,6 +155,7 @@ describe("DiscreteBean", function () {
   it("Anyone can burn", async function () {
     const [p1, p2] = await ethers.getSigners();
     const contract = await ethers.deployContract("DiscreteBean");
+    await contract.claimFreeBean();
 
     await contract.transfer(p2.address, 1);
     expect(await contract.balanceOf(p1.address)).equals(2);
@@ -142,6 +174,8 @@ describe("DiscreteBean", function () {
   it("Deployer can mint BEAN", async function() {
     const [deployer, _] = await ethers.getSigners();
     const contract = await ethers.deployContract("DiscreteBean");
+    await contract.claimFreeBean(); 
+
     const adminRole = await contract.DEFAULT_ADMIN_ROLE();
     expect(await contract.hasRole(adminRole, deployer.address)).equals(true);
     expect(await contract.totalSupply()).equals(3);
@@ -154,6 +188,7 @@ describe("DiscreteBean", function () {
   it("Minter can mint BEAN", async function () {
     const [deployer, minter] = await ethers.getSigners();
     const contract = await ethers.deployContract("DiscreteBean")
+    await contract.claimFreeBean();
     
     await contract.setMinter(minter.address);
     expect(await contract.totalSupply()).equals(3);
@@ -166,6 +201,7 @@ describe("DiscreteBean", function () {
   it("Non-minter cannot mint BEAN", async function() {
     const [deployer, nonMinter, _] = await ethers.getSigners();
     const contract = await ethers.deployContract("DiscreteBean");
+    await contract.claimFreeBean();
 
     expect(await contract.totalSupply()).equals(3);
     await expect(contract.connect(nonMinter).mint(nonMinter.address, 3)).to.be.revertedWithCustomError(contract,"AccessControlUnauthorizedAccount");

@@ -9,11 +9,13 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 contract DiscreteBean is ERC20, ERC20Burnable, AccessControl {
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    mapping(address => bool) public hasClaim;
+
+    uint8 public constant FREE_REDEMPTION_LIMIT = 3;
 
     constructor() ERC20("Bean", "BEAN") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
-        _mint(msg.sender, 3);
     }
 
     function decimals() public pure override returns(uint8) {
@@ -26,5 +28,11 @@ contract DiscreteBean is ERC20, ERC20Burnable, AccessControl {
 
     function setMinter(address minter) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(MINTER_ROLE, minter);
+    }
+
+    function claimFreeBean() external {
+        require(!hasClaim[msg.sender], "You have already redeemed your free bean.");
+        hasClaim[msg.sender] = true;
+        _mint(msg.sender, FREE_REDEMPTION_LIMIT);
     }
 }

@@ -18,7 +18,8 @@ async function deploySystem() {
     const bean = await ethers.deployContract("DiscreteBean");
     const mockFeed = await ethers.deployContract("MockV3Aggregator", [0, ORIGINAL_PRICE]); 
     const beanstalk = await ethers.deployContract("BeanStalk", [await bean.getAddress(), await mockFeed.getAddress()]);
-
+    
+    await bean.claimFreeBean();
     await bean.setMinter(await beanstalk.getAddress()); //beanstalk can mint
     return {bean, beanstalk, mockFeed, p1, p2, p3}
 }
