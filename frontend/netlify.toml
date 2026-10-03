@@ -1,0 +1,17 @@
+# Netlify's base directory is frontend/, so this file and these paths are relative to it.
+# Netlify must build the app and serve the Vite output, not the source index.html
+# (which loads /src/main.tsx and fails in production).
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  # Vite 8 requires Node ^20.19 || >=22.12.
+  NODE_VERSION = "22"
+
+# BrowserRouter routes (/bean, /farm, /beanstalk) have no files of their own,
+# so serve index.html for them. Real files in dist/ are still served as-is.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
