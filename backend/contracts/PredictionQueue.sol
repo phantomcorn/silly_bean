@@ -3,15 +3,17 @@ pragma solidity ^0.8.0;
 
 contract PredictionQueue {
 
+    enum Outcome {None, Win, Draw, Lose} //None = 0, Win = 1, Draw = 2, Lose = 3
     struct Round {
+        address owner;
         uint roundNum;
         bool hasResolved;
         uint stakedAmount;
         uint currPrice;
         uint createdAt;
         bool isHigher;
-        uint endingPrice; //assigned once resolved
-        bool correct; //assigned once resolved
+        uint endingPrice; //initially 0
+        Outcome outcome; //initially Outcome.None
     }
 
     address private immutable owner;
@@ -71,10 +73,10 @@ contract PredictionQueue {
         return predictionRounds[back - 1 - position];
     }
 
-    function resolveLatestRound(bool correct, uint actualPrice) external onlyOwner notEmpty{
+    function resolveLatestRound(Outcome outcome, uint actualPrice) external onlyOwner notEmpty{
         Round storage currRound = predictionRounds[back - 1];
         currRound.endingPrice = actualPrice;
         currRound.hasResolved = true;
-        currRound.correct = correct;
+        currRound.outcome = outcome;
     }
 }

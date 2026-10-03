@@ -1,7 +1,14 @@
 import { expect } from "chai";
 import { network } from "hardhat";
 const { ethers } = await network.create();
-import type { PredictionQueue} from "../types/ethers-contracts/index.js";
+import type { PredictionQueue } from "../types/ethers-contracts/index.js";
+
+const Outcome = { //Mirrors PredictionQueue.Outcome enum
+    None: 0,
+    Win: 1,
+    Draw: 2,
+    Lose: 3
+}
 
 const ROUND = {
     roundNum: 1,
@@ -11,8 +18,12 @@ const ROUND = {
     createdAt: Date.now(),
     isHigher: false,
     endingPrice: 0,
-    correct: false
+    correct: false,
+    owner: ethers.ZeroAddress,
+    outcome: Outcome.None
 }
+
+
 const NORMAL_ORDER = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
 const SHUFFLE_ORDER = [7, 15, 2, 19, 11, 4, 20, 1, 13, 9, 17, 6, 3, 14, 10, 18, 5, 12, 16, 8]
 
@@ -45,14 +56,14 @@ describe("PredictionQueue", function () {
         expect(await queue.connect(owner).enqueue(ROUND));
         expect(await queue.connect(owner).tail());
         expect(await queue.connect(owner).tailAt(0));
-        expect(await queue.connect(owner).resolveLatestRound(true, 0));
+        expect(await queue.connect(owner).resolveLatestRound(Outcome.Win, 0));
         expect(await queue.connect(owner).size());
         expect(await queue.connect(owner).dequeue());
 
         await expect(queue.connect(nonOwner).enqueue(ROUND)).to.be.revertedWith("Not owner");
         await expect(queue.connect(nonOwner).tail()).to.be.revertedWith("Not owner");
         await expect(queue.connect(nonOwner).tailAt(0)).to.be.revertedWith("Not owner");
-        await expect(queue.connect(nonOwner).resolveLatestRound(true, 0)).to.be.revertedWith("Not owner");
+        await expect(queue.connect(nonOwner).resolveLatestRound(Outcome.Win, 0)).to.be.revertedWith("Not owner");
         await expect(queue.connect(nonOwner).size()).to.be.revertedWith("Not owner");
         await expect(queue.connect(nonOwner).dequeue()).to.be.revertedWith("Not owner");
     })
@@ -109,7 +120,7 @@ describe("PredictionQueue", function () {
 
     it("Cannot resolveLatestRound empty queue", async function() {
         const {queue} = await deploySystem();
-        await expect(queue.resolveLatestRound(false, 0)).to.be.revertedWith("Empty");
+        await expect(queue.resolveLatestRound(Outcome.Draw, 0)).to.be.revertedWith("Empty");
     })
 
     it("resolveLatestRound resolves the latest round", async function() {
@@ -121,16 +132,16 @@ describe("PredictionQueue", function () {
 
         expect((await queue.tail()).roundNum).equals(20);
         expect((await queue.tail()).hasResolved).equals(ROUND.hasResolved);
-        expect((await queue.tail()).correct).equals(ROUND.correct);
+        expect((await queue.tail()).outcome).equals(ROUND.outcome);
         expect((await queue.tail()).endingPrice).equals(ROUND.endingPrice);
 
-        const newCorrect = true;
+        const newCorrect = Outcome.Win
         const endingPrice = 1000;
 
         await queue.resolveLatestRound(newCorrect, endingPrice);
         expect((await queue.tail()).roundNum).equals(20);
         expect((await queue.tail()).hasResolved).equals(true);
-        expect((await queue.tail()).correct).equals(newCorrect);
+        expect((await queue.tail()).outcome).equals(newCorrect);
         expect((await queue.tail()).endingPrice).equals(endingPrice);
     })
 
