@@ -28,10 +28,14 @@ Prediction market (BeanStalk): https://sepolia.etherscan.io/address/0x2cF60F3fAe
 
 - Any BEAN holders can stake.
 - Given recent ETH/USD, predicts whether the current price is higher/lower than the current one.
-- Price will update every 10 seconds or once the user predicts.
 - Uses an oracle network to look up the price of ETH/USD.
+- User locks in their prediction whether price is going to be high/low.
+- A prediction is only for 1 player. A round can only be locked in once.
+- A resolve action is called (ideally by a backend script) which checks the price again.
+- If price is unchanged, it is considered a draw and the round simply ends. User balance remains unchanged.
 - If guess is correct, a multiplier is used to reward more BEANs.
 - If guess is wrong, holders lose their BEAN to the house.
+- Another player's prediction will be block if the current round has not been resolved.
 - Bean Stalk **can** generate (mint) more beans. 
 
 # What I did
