@@ -26,16 +26,18 @@ contract BeanStalk {
 
     BeanInterface beanContract;
     AggregatorV3Interface priceFeed;
-
+    uint nextRoundNum;
+    PredictionQueue queue;
     struct StakedBalance {
         uint stakedAmount;
         uint earnSoFar;
     }
     
-    uint beansOnTheHouse;
-    uint nextRoundNum;
+    uint public totalStake;
+    uint public beansOnTheHouse;
+
     mapping(address => StakedBalance) stakedBalance;
-    PredictionQueue queue;
+
     
     constructor(address beanContractAddress, address ethUsdAddress) {
         beanContract = BeanInterface(beanContractAddress);
@@ -55,12 +57,21 @@ contract BeanStalk {
         beanContract.transferFrom(msg.sender, address(this), amount);
         //add to stakedBalance
         StakedBalance storage staker = stakedBalance[msg.sender];
-        staker.stakedAmount = amount;
+        staker.stakedAmount += amount;
+        totalStake += amount;
     }
 
     function unstake(uint amount) external {
         // Must have more beans than unstaked amount
         require(stakedBalance[msg.sender].stakedAmount >= amount, "Insufficient funds.");
+        if (queue.size() > 0) {
+            PredictionQueue.Round memory currRound = queue.tail();
+            bool isOwner = msg.sender == currRound.owner;
+            bool ownerOfRound = isOwner && currRound.hasResolved;
+            bool hasEnough = stakedBalance[msg.sender].stakedAmount - amount >= currRound.stakedAmount;
+            require(!isOwner || (ownerOfRound && hasEnough), "Must have enough collateral for the current prediction round.");
+        }
+
         // Transfer back staked to account
         beanContract.transfer(msg.sender, amount);
         
@@ -70,7 +81,7 @@ contract BeanStalk {
         } else {
             stakedBalance[msg.sender].stakedAmount -= amount;
         }
-        
+        totalStake -= amount;
     }
 
     function getAmountStake() view external returns(uint) {
@@ -95,20 +106,23 @@ contract BeanStalk {
         return limitedPredictions;
     }
 
-    function getBeansOnTheHouse() view external returns(uint) {
-        return beansOnTheHouse;
-    }
-
     function lockInPredict(uint amount, bool higher) external {
         require(stakedBalance[msg.sender].stakedAmount >= amount, "Insufficient funds.");
-        //Single player (1 player = 1 round)
+        uint price = getOraclePrice();
+        require(price > 0, 'Invalid price on data feed');
+
+        if (queue.size() > 0) {
+            require(queue.tail().hasResolved, "Current round is still ongoing.");
+        }
 
         PredictionQueue.Round memory newRound;
         newRound.roundNum = nextRoundNum;
         newRound.createdAt = block.timestamp;
-        newRound.currPrice = getOraclePrice();
+        newRound.currPrice = price;
         newRound.stakedAmount = amount;
         newRound.isHigher = higher;
+        newRound.owner = msg.sender;    //Single player (1 player = 1 round)
+        newRound.outcome = PredictionQueue.Outcome.None;
         queue.enqueue(newRound);
         nextRoundNum++;
     }
@@ -118,20 +132,26 @@ contract BeanStalk {
         PredictionQueue.Round memory currRound = queue.tail();
         require(block.timestamp - currRound.createdAt >= 10, "Try again in 10 seconds.");
         require(!currRound.hasResolved, "Round has already ended.");
-        bool expectation = currRound.isHigher;
         uint actualPrice = getOraclePrice();
-        bool actual = actualPrice > currRound.currPrice;
-        bool correct = (expectation && actual) || (!expectation && !actual);
-        if (correct) {
-            uint reward = calculateReward(currRound.stakedAmount);
-            beanContract.mint(address(this), reward);
-            stakedBalance[msg.sender].stakedAmount += reward;
-            stakedBalance[msg.sender].earnSoFar += reward;
+        require(actualPrice > 0, 'Invalid price on data feed');
+        address owner = currRound.owner;
+        PredictionQueue.Outcome outcome;
+        if (actualPrice != currRound.currPrice) {
+            if (currRound.isHigher == actualPrice > currRound.currPrice) {//prediction and actual outcome match -> win
+                uint reward = calculateReward(currRound.stakedAmount);
+                beanContract.mint(address(this), reward);
+                stakedBalance[owner].stakedAmount += reward;
+                stakedBalance[owner].earnSoFar += reward;
+                outcome = PredictionQueue.Outcome.Win;
+            } else {
+                stakedBalance[owner].stakedAmount -= currRound.stakedAmount;
+                beansOnTheHouse += currRound.stakedAmount;
+                outcome = PredictionQueue.Outcome.Lose;
+            }
         } else {
-            stakedBalance[msg.sender].stakedAmount -= currRound.stakedAmount;
-            beansOnTheHouse += currRound.stakedAmount;
+            outcome = PredictionQueue.Outcome.Draw;
         }
-        queue.resolveLatestRound(correct, actualPrice);
+        queue.resolveLatestRound(outcome, actualPrice);
     }
 
     function getOraclePrice() internal view returns(uint) {
