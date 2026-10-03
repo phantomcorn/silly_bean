@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { Contract } from "ethers";
 import { useTxStatus } from "../hooks/useTxStatus";
 import { CONTRACT_ADDRESSES } from "../config/contracts";
+import { Bean } from "./Bean";
+import { TxStatus } from "./TxStatus";
 
 interface Props {
   discreteBean: Contract | null;
@@ -66,31 +68,69 @@ export function RegularFarmPanel({ discreteBean, regularFarm, address }: Props) 
     });
 
   return (
-    <section>
-      <h2>Regular Farm (Staking)</h2>
-      <p>Contract: {CONTRACT_ADDRESSES.regularFarm}</p>
-      <p>Your staked amount: {stakedAmount ?? "-"} BEAN</p>
-      <p>Your wallet balance: {walletBalance ?? "-"} BEAN</p>
-      <p>Reward rate: 1 BEAN per minute staked.</p>
-      <button onClick={loadData} disabled={!regularFarm || !address}>
-        Refresh
-      </button>
-
-      <div>
-        <button onClick={handleStake} disabled={status.busy || !regularFarm}>
-          Stake entire balance
-        </button>
-        <button onClick={handleUnstake} disabled={status.busy || !regularFarm}>
-          Unstake (all + reward)
-        </button>
-        <button onClick={handleClaim} disabled={status.busy || !regularFarm}>
-          Claim reward
-        </button>
+    <section className="page">
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">Staking</div>
+          <h2>Regular Farm</h2>
+          <p className="mono">{CONTRACT_ADDRESSES.regularFarm}</p>
+        </div>
+        <div className="toolbar">
+          <button className="small ghost" onClick={loadData} disabled={!regularFarm || !address}>
+            Refresh
+          </button>
+        </div>
       </div>
 
-      {status.busy && <p>Pending transaction...</p>}
-      {status.message && <p>{status.message}</p>}
-      {status.error && <p role="alert">{status.error}</p>}
+      <dl className="stats">
+        <div className="stat">
+          <dt>Your staked amount</dt>
+          <dd>{stakedAmount ?? "-"}<small>BEAN</small></dd>
+        </div>
+        <div className="stat">
+          <dt>Your wallet balance</dt>
+          <dd>{walletBalance ?? "-"}<small>BEAN</small></dd>
+        </div>
+        <div className="stat">
+          <dt>Reward rate</dt>
+          <dd>1<small>BEAN / minute</small></dd>
+        </div>
+      </dl>
+
+      <div className="cards">
+        <div className="card">
+          <Bean className="card-bean" fill="var(--moss)" />
+          <h3>Plant</h3>
+          <p>Stake your entire BEAN balance into the farm.</p>
+          <div className="row">
+            <button onClick={handleStake} disabled={status.busy || !regularFarm}>
+              Stake entire balance
+            </button>
+          </div>
+        </div>
+        <div className="card">
+          <Bean className="card-bean" fill="var(--ochre)" rotate={-20} />
+          <h3>Harvest</h3>
+          <p>Claim your reward and keep your stake growing.</p>
+          <div className="row">
+            <button onClick={handleClaim} disabled={status.busy || !regularFarm}>
+              Claim reward
+            </button>
+          </div>
+        </div>
+        <div className="card">
+          <Bean className="card-bean" fill="var(--tomato)" rotate={25} />
+          <h3>Uproot</h3>
+          <p>Unstake everything and collect your reward in one go.</p>
+          <div className="row">
+            <button onClick={handleUnstake} disabled={status.busy || !regularFarm}>
+              Unstake (all + reward)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <TxStatus status={status} />
     </section>
   );
 }

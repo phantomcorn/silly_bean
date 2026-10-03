@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { formatUnits, type Contract } from "ethers";
 import { useTxStatus } from "../hooks/useTxStatus";
 import { CONTRACT_ADDRESSES } from "../config/contracts";
+import { Bean } from "./Bean";
+import { TxStatus } from "./TxStatus";
 
 interface Props {
   discreteBean: Contract | null;
@@ -11,6 +13,7 @@ interface Props {
 
 // Mirrors PredictionQueue.Outcome: None = 0, Win = 1, Draw = 2, Lose = 3
 const OUTCOME_LABELS = ["-", "Won", "Draw", "Lost"] as const;
+const OUTCOME_PILLS = ["none", "win", "draw", "lose"] as const;
 
 interface PredictionRound {
   owner: string;
@@ -137,120 +140,172 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
     });
 
   return (
-    <section>
-      <h2>Bean Stalk (Prediction Market)</h2>
-      <p>Contract: {CONTRACT_ADDRESSES.beanStalk}</p>
-      <p>Your staked amount: {stakedAmount ?? "-"} BEAN</p>
-      <p>Your earnings so far: {earnSoFar ?? "-"} BEAN</p>
-      <p>Total staked (all users): {totalStake ?? "-"} BEAN</p>
-      <p>Beans on the house: {beansOnTheHouse ?? "-"} BEAN</p>
-      <p>Your wallet balance: {walletBalance ?? "-"} BEAN</p>
-      <button onClick={loadData} disabled={!beanStalk || !address}>
-        Refresh view
-      </button>
-      <button onClick={handleResolve} disabled={status.busy || !beanStalk}>
-        Resolve latest round
-      </button>
-
-      <h3>Stake</h3>
-      <div>
-        <input
-          placeholder="Amount"
-          type="number"
-          min="0"
-          value={stakeAmount}
-          onChange={(e) => setStakeAmount(e.target.value)}
-        />
-        <button onClick={handleStake} disabled={status.busy || !beanStalk}>
-          Stake
-        </button>
+    <section className="page">
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">Prediction market</div>
+          <h2>Bean Stalk</h2>
+          <p className="mono">{CONTRACT_ADDRESSES.beanStalk}</p>
+        </div>
+        <div className="toolbar">
+          <button className="small ghost" onClick={loadData} disabled={!beanStalk || !address}>
+            Refresh view
+          </button>
+          <button className="small" onClick={handleResolve} disabled={status.busy || !beanStalk}>
+            Resolve latest round
+          </button>
+        </div>
       </div>
 
-      <h3>Unstake</h3>
-      <div>
-        <input
-          placeholder="Amount"
-          type="number"
-          min="0"
-          value={unstakeAmount}
-          onChange={(e) => setUnstakeAmount(e.target.value)}
-        />
-        <button onClick={handleUnstake} disabled={status.busy || !beanStalk}>
-          Unstake
-        </button>
+      <dl className="stats">
+        <div className="stat">
+          <dt>Your staked amount</dt>
+          <dd>{stakedAmount ?? "-"}<small>BEAN</small></dd>
+        </div>
+        <div className="stat">
+          <dt>Your earnings so far</dt>
+          <dd>{earnSoFar ?? "-"}<small>BEAN</small></dd>
+        </div>
+        <div className="stat">
+          <dt>Your wallet balance</dt>
+          <dd>{walletBalance ?? "-"}<small>BEAN</small></dd>
+        </div>
+        <div className="stat">
+          <dt>Total staked (all users)</dt>
+          <dd>{totalStake ?? "-"}<small>BEAN</small></dd>
+        </div>
+        <div className="stat">
+          <dt>Beans on the house</dt>
+          <dd>{beansOnTheHouse ?? "-"}<small>BEAN</small></dd>
+        </div>
+      </dl>
+
+      <div className="cards">
+        <div className="card">
+          <Bean className="card-bean" fill="var(--moss)" />
+          <h3>Stake</h3>
+          <p>Back the house and earn from everyone's predictions.</p>
+          <div className="row">
+            <input
+              placeholder="Amount"
+              type="number"
+              min="0"
+              value={stakeAmount}
+              onChange={(e) => setStakeAmount(e.target.value)}
+            />
+            <button onClick={handleStake} disabled={status.busy || !beanStalk}>
+              Stake
+            </button>
+          </div>
+        </div>
+
+        <div className="card">
+          <Bean className="card-bean" fill="var(--ochre)" rotate={-20} />
+          <h3>Unstake</h3>
+          <p>Pull your beans back out of the house.</p>
+          <div className="row">
+            <input
+              placeholder="Amount"
+              type="number"
+              min="0"
+              value={unstakeAmount}
+              onChange={(e) => setUnstakeAmount(e.target.value)}
+            />
+            <button onClick={handleUnstake} disabled={status.busy || !beanStalk}>
+              Unstake
+            </button>
+          </div>
+        </div>
+
+        <div className="card">
+          <Bean className="card-bean" fill="var(--tomato)" rotate={25} />
+          <h3>Predict</h3>
+          <p>Will the price go higher or lower by the end of the round?</p>
+          <div className="row">
+            <label className="choice">
+              <input
+                type="radio"
+                name="direction"
+                checked={predictHigher}
+                onChange={() => setPredictHigher(true)}
+              />
+              Higher
+            </label>
+            <label className="choice">
+              <input
+                type="radio"
+                name="direction"
+                checked={!predictHigher}
+                onChange={() => setPredictHigher(false)}
+              />
+              Lower
+            </label>
+          </div>
+          <div className="row">
+            <input
+              placeholder="Amount"
+              type="number"
+              min="0"
+              value={predictAmount}
+              onChange={(e) => setPredictAmount(e.target.value)}
+            />
+            <button onClick={handlePredict} disabled={status.busy || !beanStalk}>
+              Predict
+            </button>
+          </div>
+        </div>
       </div>
 
-      <h3>Predict</h3>
-      <div>
-        <input
-          placeholder="Amount"
-          type="number"
-          min="0"
-          value={predictAmount}
-          onChange={(e) => setPredictAmount(e.target.value)}
-        />
-        <label>
-          <input
-            type="radio"
-            name="direction"
-            checked={predictHigher}
-            onChange={() => setPredictHigher(true)}
-          />
-          Higher
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="direction"
-            checked={!predictHigher}
-            onChange={() => setPredictHigher(false)}
-          />
-          Lower
-        </label>
-        <button onClick={handlePredict} disabled={status.busy || !beanStalk}>
-          Predict
-        </button>
-      </div>
-
-      <h3>Recent Prediction Rounds</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Round</th>
-            <th>Owner</th>
-            <th>Created At</th>
-            <th>Staked</th>
-            <th>Recorded Price</th>
-            <th>Direction</th>
-            <th>Resolved</th>
-            <th>Ending Price</th>
-            <th>Outcome</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rounds.map((round) => (
-            <tr key={round.roundNum}>
-              <td>{round.roundNum}</td>
-              <td>
-                {address && round.owner.toLowerCase() === address.toLowerCase()
-                  ? "You"
-                  : `${round.owner.slice(0, 6)}…${round.owner.slice(-4)}`}
-              </td>
-              <td>{new Date(Number(round.createdAt) * 1000).toLocaleString()}</td>
-              <td>{round.stakedAmount} BEAN</td>
-              <td>{formatPrice(round.currPrice)}</td>
-              <td>{round.isHigher ? "Higher" : "Lower"}</td>
-              <td>{round.hasResolved ? "Yes" : "No"}</td>
-              <td>{round.hasResolved ? formatPrice(round.endingPrice) : "-"}</td>
-              <td>{OUTCOME_LABELS[round.outcome] ?? "-"}</td>
+      <h3>Recent prediction rounds</h3>
+      <div className="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Round</th>
+              <th>Owner</th>
+              <th>Created At</th>
+              <th>Staked</th>
+              <th>Recorded Price</th>
+              <th>Direction</th>
+              <th>Resolved</th>
+              <th>Ending Price</th>
+              <th>Outcome</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rounds.length === 0 && (
+              <tr>
+                <td className="empty" colSpan={9}>
+                  No rounds yet.
+                </td>
+              </tr>
+            )}
+            {rounds.map((round) => (
+              <tr key={round.roundNum}>
+                <td className="mono">{round.roundNum}</td>
+                <td className="mono">
+                  {address && round.owner.toLowerCase() === address.toLowerCase()
+                    ? "You"
+                    : `${round.owner.slice(0, 6)}…${round.owner.slice(-4)}`}
+                </td>
+                <td>{new Date(Number(round.createdAt) * 1000).toLocaleString()}</td>
+                <td>{round.stakedAmount} BEAN</td>
+                <td>{formatPrice(round.currPrice)}</td>
+                <td>{round.isHigher ? "Higher" : "Lower"}</td>
+                <td>{round.hasResolved ? "Yes" : "No"}</td>
+                <td>{round.hasResolved ? formatPrice(round.endingPrice) : "-"}</td>
+                <td>
+                  <span className={`pill ${OUTCOME_PILLS[round.outcome] ?? "none"}`}>
+                    {OUTCOME_LABELS[round.outcome] ?? "-"}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      {status.busy && <p>Pending transaction...</p>}
-      {status.message && <p>{status.message}</p>}
-      {status.error && <p role="alert">{status.error}</p>}
+      <TxStatus status={status} />
     </section>
   );
 }

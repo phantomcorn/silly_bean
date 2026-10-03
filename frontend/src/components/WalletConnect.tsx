@@ -14,29 +14,46 @@ export function WalletConnect(props: Props) {
     switchToSepolia,
   } = props;
 
+  const wrongChain = address && chainId !== SEPOLIA_CHAIN_ID;
+
   return (
-    <section>
-      <h2>Wallet</h2>
+    <section className="wallet" aria-label="Wallet">
       {address ? (
-        <div>
-          <p>Connected: {address}</p>
-          <p>
-            Chain ID: {chainId}{" "}
-            {chainId !== SEPOLIA_CHAIN_ID && (
-              <>
-                (expected {SEPOLIA_CHAIN_ID} — Sepolia){" "}
-                <button onClick={switchToSepolia}>Switch to Sepolia</button>
-              </>
+        <>
+          <div className="wallet-info">
+            <span className="mono" title={address}>
+              <span className={wrongChain ? "dot warn" : "dot"} />
+              {address.slice(0, 6)}…{address.slice(-4)}
+            </span>
+            <span className="eyebrow">
+              Chain {chainId}
+              {wrongChain && ` · expected ${SEPOLIA_CHAIN_ID} (Sepolia)`}
+            </span>
+          </div>
+          <div className="wallet-actions">
+            {wrongChain && (
+              <button className="small" onClick={switchToSepolia}>
+                Switch to Sepolia
+              </button>
             )}
-          </p>
-          <button onClick={disconnect}>Disconnect</button>
-        </div>
+            <button className="small ghost" onClick={disconnect}>
+              Disconnect
+            </button>
+          </div>
+        </>
       ) : (
-        <button onClick={connect} disabled={isConnecting}>
-          {isConnecting ? "Connecting..." : "Connect Wallet"}
-        </button>
+        <>
+          <span className="eyebrow">No wallet connected</span>
+          <button className="small" onClick={connect} disabled={isConnecting}>
+            {isConnecting ? "Connecting..." : "Connect Wallet"}
+          </button>
+        </>
       )}
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <p className="status error" role="alert">
+          {error}
+        </p>
+      )}
     </section>
   );
 }

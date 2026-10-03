@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { Contract } from "ethers";
 import { useTxStatus } from "../hooks/useTxStatus";
 import { CONTRACT_ADDRESSES } from "../config/contracts";
+import { Bean } from "./Bean";
+import { TxStatus } from "./TxStatus";
 
 interface Props {
   discreteBean: Contract | null;
@@ -78,100 +80,138 @@ export function BeanTokenPanel({ discreteBean, address }: Props) {
     });
 
   return (
-    <section>
-      <h2>Discrete Bean (BEAN)</h2>
-      <p>Contract: {CONTRACT_ADDRESSES.discreteBean}</p>
-      <p>Your balance: {balance ?? "-"} BEAN</p>
-      <p>Total supply: {totalSupply ?? "-"} BEAN</p>
-      <button onClick={loadData} disabled={!discreteBean || !address}>
-        Refresh
-      </button>
-
-      <h3>Claim free beans</h3>
-      <div>
-        {hasClaimed ? (
-          <p>You have already claimed your free beans.</p>
-        ) : (
-          <button
-            onClick={handleClaim}
-            disabled={status.busy || !discreteBean || !address || hasClaimed === null}
-          >
-            Claim {freeLimit ?? "-"} free BEAN
+    <section className="page">
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">ERC-20 token</div>
+          <h2>Discrete Bean</h2>
+          <p className="mono">{CONTRACT_ADDRESSES.discreteBean}</p>
+        </div>
+        <div className="toolbar">
+          <button className="small ghost" onClick={loadData} disabled={!discreteBean || !address}>
+            Refresh
           </button>
-        )}
+        </div>
       </div>
 
-      <h3>Transfer</h3>
-      <div>
-        <input
-          placeholder="Recipient address"
-          value={transferTo}
-          onChange={(e) => setTransferTo(e.target.value)}
-        />
-        <input
-          placeholder="Amount"
-          type="number"
-          min="0"
-          value={transferAmount}
-          onChange={(e) => setTransferAmount(e.target.value)}
-        />
-        <button onClick={handleTransfer} disabled={status.busy || !discreteBean}>
-          Transfer
-        </button>
+      <dl className="stats">
+        <div className="stat">
+          <dt>Your balance</dt>
+          <dd>{balance ?? "-"}<small>BEAN</small></dd>
+        </div>
+        <div className="stat">
+          <dt>Total supply</dt>
+          <dd>{totalSupply ?? "-"}<small>BEAN</small></dd>
+        </div>
+      </dl>
+
+      <div className="cards">
+        <div className="card">
+          <Bean className="card-bean" fill="var(--moss)" />
+          <h3>Claim free beans</h3>
+          {hasClaimed ? (
+            <p>You have already claimed your free beans.</p>
+          ) : (
+            <>
+              <p>Every wallet gets one free handful to start with.</p>
+              <div className="row">
+                <button
+                  onClick={handleClaim}
+                  disabled={status.busy || !discreteBean || !address || hasClaimed === null}
+                >
+                  Claim {freeLimit ?? "-"} free BEAN
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="card">
+          <Bean className="card-bean" fill="var(--indigo)" rotate={-15} />
+          <h3>Transfer</h3>
+          <div className="row">
+            <input
+              placeholder="Recipient address"
+              value={transferTo}
+              onChange={(e) => setTransferTo(e.target.value)}
+            />
+          </div>
+          <div className="row">
+            <input
+              placeholder="Amount"
+              type="number"
+              min="0"
+              value={transferAmount}
+              onChange={(e) => setTransferAmount(e.target.value)}
+            />
+            <button onClick={handleTransfer} disabled={status.busy || !discreteBean}>
+              Transfer
+            </button>
+          </div>
+        </div>
+
+        <div className="card">
+          <Bean className="card-bean" fill="var(--ochre)" rotate={-20} />
+          <h3>Approve</h3>
+          <div className="row">
+            <input
+              placeholder="Spender address"
+              value={approveSpender}
+              onChange={(e) => setApproveSpender(e.target.value)}
+            />
+          </div>
+          <div className="row">
+            <button
+              className="small ghost"
+              onClick={() => {
+                setApproveSpender(CONTRACT_ADDRESSES.regularFarm);
+              }}
+            >
+              Fill: Regular Farm
+            </button>
+            <button
+              className="small ghost"
+              onClick={() => {
+                setApproveSpender(CONTRACT_ADDRESSES.beanStalk);
+              }}
+            >
+              Fill: Bean Stalk
+            </button>
+          </div>
+          <div className="row">
+            <input
+              placeholder="Amount"
+              type="number"
+              min="0"
+              value={approveAmount}
+              onChange={(e) => setApproveAmount(e.target.value)}
+            />
+            <button onClick={handleApprove} disabled={status.busy || !discreteBean}>
+              Approve
+            </button>
+          </div>
+        </div>
+
+        <div className="card">
+          <Bean className="card-bean" fill="var(--tomato)" rotate={25} />
+          <h3>Burn</h3>
+          <p>Send beans to the compost heap. This can't be undone.</p>
+          <div className="row">
+            <input
+              placeholder="Amount"
+              type="number"
+              min="0"
+              value={burnAmount}
+              onChange={(e) => setBurnAmount(e.target.value)}
+            />
+            <button onClick={handleBurn} disabled={status.busy || !discreteBean}>
+              Burn
+            </button>
+          </div>
+        </div>
       </div>
 
-      <h3>Approve</h3>
-      <div>
-        <input
-          placeholder="Spender address"
-          value={approveSpender}
-          onChange={(e) => setApproveSpender(e.target.value)}
-        />
-        <input
-          placeholder="Amount"
-          type="number"
-          min="0"
-          value={approveAmount}
-          onChange={(e) => setApproveAmount(e.target.value)}
-        />
-        <button onClick={handleApprove} disabled={status.busy || !discreteBean}>
-          Approve
-        </button>
-      </div>
-      <div>
-        <button
-          onClick={() => {
-            setApproveSpender(CONTRACT_ADDRESSES.regularFarm);
-          }}
-        >
-          Fill: Regular Farm
-        </button>
-        <button
-          onClick={() => {
-            setApproveSpender(CONTRACT_ADDRESSES.beanStalk);
-          }}
-        >
-          Fill: Bean Stalk
-        </button>
-      </div>
-
-      <h3>Burn</h3>
-      <div>
-        <input
-          placeholder="Amount"
-          type="number"
-          min="0"
-          value={burnAmount}
-          onChange={(e) => setBurnAmount(e.target.value)}
-        />
-        <button onClick={handleBurn} disabled={status.busy || !discreteBean}>
-          Burn
-        </button>
-      </div>
-
-      {status.busy && <p>Pending transaction...</p>}
-      {status.message && <p>{status.message}</p>}
-      {status.error && <p role="alert">{status.error}</p>}
+      <TxStatus status={status} />
     </section>
   );
 }

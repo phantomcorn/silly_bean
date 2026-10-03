@@ -1,13 +1,9 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { useWallet } from "../hooks/useWallet";
 import { useContracts } from "../hooks/useContracts";
 import { WalletConnect } from "./WalletConnect";
+import { Bean } from "./Bean";
 import type { AppOutletContext } from "../context";
-
-const navLinkStyle = ({ isActive }: { isActive: boolean }) => ({
-  marginRight: 12,
-  fontWeight: isActive ? "bold" : "normal",
-});
 
 export function Layout() {
   const wallet = useWallet();
@@ -15,27 +11,34 @@ export function Layout() {
   const context: AppOutletContext = { wallet, contracts };
 
   return (
-    <main>
-      <h1>Silly Beans</h1>
-
-      <nav>
-        <NavLink to="/" end style={navLinkStyle}>
-          Home
-        </NavLink>
-        <NavLink to="/bean" style={navLinkStyle}>
-          Bean
-        </NavLink>
-        <NavLink to="/farm" style={navLinkStyle}>
-          Farm
-        </NavLink>
-        <NavLink to="/beanstalk" style={navLinkStyle}>
-          Bean Stalk
-        </NavLink>
+    <div className="wrap">
+      <nav className="site-nav">
+        <Link className="logo" to="/" aria-label="Silly Beans home">
+          <Bean />
+          Silly Beans
+        </Link>
+        <div className="navlinks">
+          <NavLink to="/" end>
+            Home
+          </NavLink>
+          <NavLink to="/bean">Bean</NavLink>
+          <NavLink to="/farm">Farm</NavLink>
+          <NavLink to="/beanstalk">Bean Stalk</NavLink>
+        </div>
       </nav>
 
       <WalletConnect {...wallet} />
 
-      <Outlet context={context} />
-    </main>
+      <main>
+        <Outlet context={context} />
+      </main>
+
+      <footer>
+        <p>
+          Silly Beans runs on the Sepolia testnet. BEAN has no real value —
+          plant, predict and burn to your heart's content.
+        </p>
+      </footer>
+    </div>
   );
 }
