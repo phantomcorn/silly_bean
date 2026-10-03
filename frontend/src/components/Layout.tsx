@@ -13,9 +13,9 @@ export function Layout() {
   return (
     <div className="wrap">
       <nav className="site-nav">
-        <Link className="logo" to="/" aria-label="Silly Beans home">
+        <Link className="logo" to="/" aria-label="Silly Bean home">
           <Bean />
-          Silly Beans
+          Silly Bean
         </Link>
         <div className="navlinks">
           <NavLink to="/" end>
@@ -35,7 +35,7 @@ export function Layout() {
 
       <footer>
         <p>
-          Silly Beans runs on the Sepolia testnet. BEAN has no real value —
+          Silly Bean runs on the Sepolia testnet. BEAN has no real value —
           plant, predict and burn to your heart's content.
         </p>
       </footer>

@@ -8,7 +8,7 @@ export function HomePage() {
         <div>
           <div className="eyebrow">Beans, but make them on-chain</div>
           <h1>
-            <span>Silly</span> <span className="tilt">Beans</span>
+            <span>Silly</span> <span className="tilt">Bean</span>
           </h1>
           <p className="lede">
             Claim some free BEAN, plant them in the farm to sprout rewards, or
