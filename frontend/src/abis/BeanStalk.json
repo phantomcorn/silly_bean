@@ -17,7 +17,7 @@
   },
   {
     "inputs": [],
-    "name": "getAmountStake",
+    "name": "beansOnTheHouse",
     "outputs": [
       {
         "internalType": "uint256",
@@ -30,7 +30,7 @@
   },
   {
     "inputs": [],
-    "name": "getBeansOnTheHouse",
+    "name": "getAmountStake",
     "outputs": [
       {
         "internalType": "uint256",
@@ -74,6 +74,11 @@
       {
         "components": [
           {
+            "internalType": "address",
+            "name": "owner",
+            "type": "address"
+          },
+          {
             "internalType": "uint256",
             "name": "roundNum",
             "type": "uint256"
@@ -109,9 +114,9 @@
             "type": "uint256"
           },
           {
-            "internalType": "bool",
-            "name": "correct",
-            "type": "bool"
+            "internalType": "enum PredictionQueue.Outcome",
+            "name": "outcome",
+            "type": "uint8"
           }
         ],
         "internalType": "struct PredictionQueue.Round[]",
@@ -158,6 +163,19 @@
     "name": "stake",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalStake",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
