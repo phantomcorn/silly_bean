@@ -27,7 +27,7 @@ async function deploySystem() {
 async function stake(beanstalk: BeanStalk, bean: DiscreteBean, staker: HardhatEthersSigner, amount: number) {
     const beanstalkAddr = await beanstalk.getAddress();
     const balance = await bean.balanceOf(staker.address);
-    await bean.approve(beanstalkAddr, balance); //Allow beanstalk to use p1's bean
+    await bean.connect(staker).approve(beanstalkAddr, balance); //Allow beanstalk to use staker's bean
     await beanstalk.connect(staker).stake(amount);
 }
 
