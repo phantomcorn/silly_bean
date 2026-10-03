@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Contract } from "ethers";
 import { useTxStatus } from "../hooks/useTxStatus";
 import { CONTRACT_ADDRESSES } from "../config/contracts";
-import { Bean } from "./Bean";
+import { ClaimIcon, TransferIcon, BurnIcon } from "./CardIcons";
 import { TxStatus } from "./TxStatus";
 
 interface Props {
@@ -18,9 +18,6 @@ export function BeanTokenPanel({ discreteBean, address }: Props) {
 
   const [transferTo, setTransferTo] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
-
-  const [approveSpender, setApproveSpender] = useState("");
-  const [approveAmount, setApproveAmount] = useState("");
 
   const [burnAmount, setBurnAmount] = useState("");
 
@@ -62,14 +59,6 @@ export function BeanTokenPanel({ discreteBean, address }: Props) {
       await loadData();
     });
 
-  const handleApprove = () =>
-    status.run(async () => {
-      if (!discreteBean) throw new Error("Contract not ready.");
-      const tx = await discreteBean.approve(approveSpender, BigInt(approveAmount || "0"));
-      await tx.wait();
-      status.setMessage(`Approved ${approveAmount} BEAN for ${approveSpender}`);
-    });
-
   const handleBurn = () =>
     status.run(async () => {
       if (!discreteBean) throw new Error("Contract not ready.");
@@ -107,7 +96,7 @@ export function BeanTokenPanel({ discreteBean, address }: Props) {
 
       <div className="cards">
         <div className="card">
-          <Bean className="card-bean" fill="var(--moss)" />
+          <ClaimIcon />
           <h3>Claim free beans</h3>
           {hasClaimed ? (
             <p>You have already claimed your free beans.</p>
@@ -127,7 +116,7 @@ export function BeanTokenPanel({ discreteBean, address }: Props) {
         </div>
 
         <div className="card">
-          <Bean className="card-bean" fill="var(--indigo)" rotate={-15} />
+          <TransferIcon />
           <h3>Transfer</h3>
           <div className="row">
             <input
@@ -151,49 +140,7 @@ export function BeanTokenPanel({ discreteBean, address }: Props) {
         </div>
 
         <div className="card">
-          <Bean className="card-bean" fill="var(--ochre)" rotate={-20} />
-          <h3>Approve</h3>
-          <div className="row">
-            <input
-              placeholder="Spender address"
-              value={approveSpender}
-              onChange={(e) => setApproveSpender(e.target.value)}
-            />
-          </div>
-          <div className="row">
-            <button
-              className="small ghost"
-              onClick={() => {
-                setApproveSpender(CONTRACT_ADDRESSES.regularFarm);
-              }}
-            >
-              Fill: Regular Farm
-            </button>
-            <button
-              className="small ghost"
-              onClick={() => {
-                setApproveSpender(CONTRACT_ADDRESSES.beanStalk);
-              }}
-            >
-              Fill: Bean Stalk
-            </button>
-          </div>
-          <div className="row">
-            <input
-              placeholder="Amount"
-              type="number"
-              min="0"
-              value={approveAmount}
-              onChange={(e) => setApproveAmount(e.target.value)}
-            />
-            <button onClick={handleApprove} disabled={status.busy || !discreteBean}>
-              Approve
-            </button>
-          </div>
-        </div>
-
-        <div className="card">
-          <Bean className="card-bean" fill="var(--tomato)" rotate={25} />
+          <BurnIcon />
           <h3>Burn</h3>
           <p>Send beans to the compost heap. This can't be undone.</p>
           <div className="row">

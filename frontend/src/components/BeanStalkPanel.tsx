@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { formatUnits, type Contract } from "ethers";
 import { useTxStatus } from "../hooks/useTxStatus";
 import { CONTRACT_ADDRESSES } from "../config/contracts";
-import { Bean } from "./Bean";
+import { StakeIcon, UnstakeIcon, PredictIcon } from "./CardIcons";
 import { TxStatus } from "./TxStatus";
 
 interface Props {
@@ -149,10 +149,10 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
         </div>
         <div className="toolbar">
           <button className="small ghost" onClick={loadData} disabled={!beanStalk || !address}>
-            Refresh view
+            Refresh
           </button>
           <button className="small" onClick={handleResolve} disabled={status.busy || !beanStalk}>
-            Resolve latest round
+            Resolve round (Simulate backend call)
           </button>
         </div>
       </div>
@@ -182,9 +182,9 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
 
       <div className="cards">
         <div className="card">
-          <Bean className="card-bean" fill="var(--moss)" />
+          <StakeIcon />
           <h3>Stake</h3>
-          <p>Back the house and earn from everyone's predictions.</p>
+          <p>Feeling risky? Try your luck by putting your beans here</p>
           <div className="row">
             <input
               placeholder="Amount"
@@ -200,9 +200,9 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
         </div>
 
         <div className="card">
-          <Bean className="card-bean" fill="var(--ochre)" rotate={-20} />
+          <UnstakeIcon />
           <h3>Unstake</h3>
-          <p>Pull your beans back out of the house.</p>
+          <p>Time to go to bed. No more gambling.</p>
           <div className="row">
             <input
               placeholder="Amount"
@@ -218,7 +218,7 @@ export function BeanStalkPanel({ discreteBean, beanStalk, address }: Props) {
         </div>
 
         <div className="card">
-          <Bean className="card-bean" fill="var(--tomato)" rotate={25} />
+          <PredictIcon />
           <h3>Predict</h3>
           <p>Will the price go higher or lower by the end of the round?</p>
           <div className="row">

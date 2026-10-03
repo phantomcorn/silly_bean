@@ -1,9 +1,9 @@
 import type { CSSProperties } from "react";
 
-const BEAN_POINTS =
+export const BEAN_POINTS =
   "0,-32 36,-39 65,-20 65,16 36,39 0,44 -36,39 -65,16 -65,-20 -36,-39";
 
-const BEAN_COLORS = ["#141210", "#2f5d50", "#e0a526", "#3a3f8f", "#c4532f"];
+const BEAN_COLORS = ["#2f5d50", "#e0a526", "#3a3f8f", "#c4532f", "#c75b8a"];
 
 interface BeanProps {
   fill?: string;
@@ -11,7 +11,7 @@ interface BeanProps {
   className?: string;
 }
 
-export function Bean({ fill = "var(--ink)", rotate = 0, className }: BeanProps) {
+export function Bean({ fill = "var(--tomato)", rotate = 0, className }: BeanProps) {
   return (
     <svg className={className} viewBox="-70 -45 140 92" aria-hidden="true">
       <polygon points={BEAN_POINTS} fill={fill} transform={`rotate(${rotate})`} />

@@ -9,6 +9,7 @@
   --ochre: #e0a526;
   --moss: #2f5d50;
   --indigo: #3a3f8f;
+  --rose: #c75b8a;
   --display: "Bagel Fat One", "Arial Rounded MT Bold", system-ui, sans-serif;
   --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
@@ -69,8 +70,28 @@ h1 span {
   display: inline-block;
 }
 
-h1 .tilt {
+/* One bean colour per letter of "Silly". */
+h1 .letters span:nth-child(5n + 1) {
+  color: var(--moss);
+}
+
+h1 .letters span:nth-child(5n + 2) {
+  color: var(--ochre);
+}
+
+h1 .letters span:nth-child(5n + 3) {
+  color: var(--indigo);
+}
+
+h1 .letters span:nth-child(5n + 4) {
   color: var(--tomato);
+}
+
+h1 .letters span:nth-child(5n + 5) {
+  color: var(--rose);
+}
+
+h1 .tilt {
   transform: rotate(-4deg);
 }
 
@@ -355,13 +376,116 @@ input[type="radio"] {
   margin: 0;
 }
 
-.card > .btn {
-  align-self: start;
+/* Pin the action row to the bottom so buttons line up across a row of cards. */
+.card > .row:last-child {
+  margin-top: auto;
+}
+
+/* Clickable sticker cards: on hover the bottom-right corner peels back. */
+@property --peel {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+.sticker {
+  --peel: 0px;
+  position: relative;
+  display: flex;
+  color: var(--ink);
+  text-decoration: none;
+  border-radius: 22px 22px 22px 6px;
+  transition:
+    --peel 0.35s cubic-bezier(0.3, 1.4, 0.5, 1),
+    transform 0.25s ease;
+}
+
+.sticker-face {
+  flex: 1;
+  /* Cut the corner away as it lifts off the page. */
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--peel)),
+    calc(100% - var(--peel)) 100%,
+    0 100%
+  );
+}
+
+/* The folded-back flap: the cut corner mirrored across the fold line. */
+.sticker::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: var(--peel);
+  height: var(--peel);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  /* The tip is the card's bottom-right corner folded over, so it keeps that radius. */
+  border-top-left-radius: 22px;
+  /* Bright at the lifted tip, curling into shadow at the fold. */
+  background: linear-gradient(
+    135deg,
+    #fffdf8 0%,
+    #f4eee3 40%,
+    #cfc3ab 78%,
+    #a39579 100%
+  );
+  pointer-events: none;
+}
+
+/* Shadow the lifted flap casts on the page where the corner was. */
+.sticker::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: var(--peel);
+  height: var(--peel);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  border-bottom-right-radius: 22px;
+  background: linear-gradient(
+    135deg,
+    rgb(20 18 16 / 0.28) 0%,
+    rgb(20 18 16 / 0.08) 55%,
+    transparent 75%
+  );
+  pointer-events: none;
+}
+
+.sticker:hover,
+.sticker:focus-visible {
+  --peel: 64px;
+  transform: translateY(-3px) rotate(-0.6deg);
+}
+
+.sticker:active {
+  --peel: 96px;
+}
+
+.sticker-cta {
+  margin-top: auto;
+  padding-top: 4px;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticker {
+    transition: none;
+  }
 }
 
 .card svg.card-bean {
   width: 56px;
   height: 38px;
+  /* Pad to the 48px icon height so titles line up next to card icons. */
+  margin-block: 5px;
+}
+
+.card svg.card-icon {
+  width: 72px;
+  height: 48px;
 }
 
 .row {

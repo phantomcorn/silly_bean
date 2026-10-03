@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Contract } from "ethers";
 import { useTxStatus } from "../hooks/useTxStatus";
 import { CONTRACT_ADDRESSES } from "../config/contracts";
-import { Bean } from "./Bean";
+import { PlantIcon, HarvestIcon, UprootIcon } from "./CardIcons";
 import { TxStatus } from "./TxStatus";
 
 interface Props {
@@ -99,7 +99,7 @@ export function RegularFarmPanel({ discreteBean, regularFarm, address }: Props) 
 
       <div className="cards">
         <div className="card">
-          <Bean className="card-bean" fill="var(--moss)" />
+          <PlantIcon />
           <h3>Plant</h3>
           <p>Stake your entire BEAN balance into the farm.</p>
           <div className="row">
@@ -109,7 +109,7 @@ export function RegularFarmPanel({ discreteBean, regularFarm, address }: Props) 
           </div>
         </div>
         <div className="card">
-          <Bean className="card-bean" fill="var(--ochre)" rotate={-20} />
+          <HarvestIcon />
           <h3>Harvest</h3>
           <p>Claim your reward and keep your stake growing.</p>
           <div className="row">
@@ -119,7 +119,7 @@ export function RegularFarmPanel({ discreteBean, regularFarm, address }: Props) 
           </div>
         </div>
         <div className="card">
-          <Bean className="card-bean" fill="var(--tomato)" rotate={25} />
+          <UprootIcon />
           <h3>Uproot</h3>
           <p>Unstake everything and collect your reward in one go.</p>
           <div className="row">
