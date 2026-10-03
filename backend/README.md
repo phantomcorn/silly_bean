@@ -6,7 +6,7 @@ Token (Discrete Bean): https://sepolia.etherscan.io/address/0x8e8e07ca4179Bc1fFb
 
 Staking pool (Regular Farm): https://sepolia.etherscan.io/address/0xe49bba42f5AF5Fb6d82DDFa7ad75DBEAde34Fa97
 
-Prediction market (BeanStalk): https://sepolia.etherscan.io/address/0x2cF60F3fAeB5043bfc9d16260043F860c6838026
+Prediction market (BeanStalk): https://sepolia.etherscan.io/address/0x7B378D7d9E294548907eC919a9d5deE99F133Ede
 
 # Discrete Bean (Token)
 
